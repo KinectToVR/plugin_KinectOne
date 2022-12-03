@@ -24,6 +24,8 @@ public static class DeviceData
 [Export(typeof(ITrackingDevice))]
 [ExportMetadata("Name", DeviceData.Name)]
 [ExportMetadata("Guid", DeviceData.Guid)]
+[ExportMetadata("Publisher", "K2VR Team")]
+[ExportMetadata("Website", "https://github.com/KinectToVR/plugin_KinectV2")]
 public class KinectV2 : ITrackingDevice
 {
     private static readonly SortedDictionary<TrackedJointType, JointType> KinectJointTypeDictionary = new()
