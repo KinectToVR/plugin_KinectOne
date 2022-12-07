@@ -57,13 +57,6 @@ public class KinectV2 : ITrackingDevice
         { TrackedJointType.JointFootRight, JointType.FootRight }
     };
 
-    private static readonly SortedDictionary<TrackingState, TrackedJointState> KinectJointStateDictionary = new()
-    {
-        { TrackingState.NotTracked, TrackedJointState.StateNotTracked },
-        { TrackingState.Inferred, TrackedJointState.StateInferred },
-        { TrackingState.Tracked, TrackedJointState.StateTracked }
-    };
-
     [Import(typeof(IAmethystHost))] private IAmethystHost Host { get; set; }
 
     private KinectSensor KinectSensor { get; set; }
@@ -88,7 +81,7 @@ public class KinectV2 : ITrackingDevice
     public List<TrackedJoint> TrackedJoints { get; } =
         // Prepend all supported joints to the joints list
         Enum.GetValues<TrackedJointType>().Where(x => x != TrackedJointType.JointManual)
-            .Select(x => new TrackedJoint { JointName = x.ToString(), Role = x }).ToList();
+            .Select(x => new TrackedJoint { Name = x.ToString(), Role = x }).ToList();
 
     public string DeviceStatusString => PluginLoaded
         ? DeviceStatus switch
@@ -219,10 +212,10 @@ public class KinectV2 : ITrackingDevice
         foreach (var (appJoint, kinectJoint) in KinectJointTypeDictionary)
         {
             var tracker = TrackedJoints[(int)appJoint];
-            (tracker.JointPosition, tracker.JointOrientation, tracker.TrackingState) = (
+            (tracker.Position, tracker.Orientation, tracker.TrackingState) = (
                 jointPositions.First(x => x.Key == kinectJoint).Value.PoseVector(),
                 jointOrientations.First(x => x.Key == kinectJoint).Value.OrientationQuaternion(),
-                KinectJointStateDictionary[jointPositions.First(x => x.Key == kinectJoint).Value.TrackingState]);
+                (TrackedJointState)jointPositions.First(x => x.Key == kinectJoint).Value.TrackingState);
         }
 
         //// Fix orientations: knees and elbows appear sideways (left)
