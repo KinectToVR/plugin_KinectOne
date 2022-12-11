@@ -12,15 +12,13 @@
 
   <ItemGroup>
     <PackageReference Include="Amethyst.Plugins.Contract" Version="0.1.7" />
+    <PackageReference Include="Microsoft.Kinect" Version="2.0.1410.19000" />
     <PackageReference Include="System.ComponentModel.Composition" Version="7.0.0" />
     <PackageReference Include="System.ComponentModel.Composition.Registration" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <TrimmerRootAssembly Include="Microsoft.Kinect" />
-    <Reference Include="Microsoft.Kinect">
-      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_64\Microsoft.Kinect\v4.0_2.0.0.0__31bf3856ad364e35\Microsoft.Kinect.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>

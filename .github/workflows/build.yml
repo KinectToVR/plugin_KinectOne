@@ -1,0 +1,34 @@
+name: Check-Build
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        dotnet-version: ['7.0.x' ]
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.0.x'
+          
+      - name: Restore and build (publish)
+        run: dotnet publish --configuration Release /p:PublishProfile=plugin_KinectV2\Properties\PublishProfiles\FolderProfile.pubxml
+
+      - name: Pack published files
+        run: |
+          cd plugin_KinectV2/bin/Release/net7.0/win10-x64/publish
+          7z a plugin_KinectV2.zip *
+        
+      - name: Upload plugin artifact
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "plugin_KinectV2 Build Artifact"
+          files: "plugin_KinectV2/bin/Release/net7.0/win10-x64/publish/plugin_KinectV2.zip"
