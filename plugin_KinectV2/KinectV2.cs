@@ -15,15 +15,9 @@ using Microsoft.Kinect;
 
 namespace plugin_KinectV2;
 
-public static class DeviceData
-{
-    public const string Name = "Xbox One Kinect";
-    public const string Guid = "K2VRTEAM-AME2-APII-DVCE-DVCEKINECTV2";
-}
-
 [Export(typeof(ITrackingDevice))]
-[ExportMetadata("Name", DeviceData.Name)]
-[ExportMetadata("Guid", DeviceData.Guid)]
+[ExportMetadata("Name", "Xbox One Kinect")]
+[ExportMetadata("Guid", "K2VRTEAM-AME2-APII-DVCE-DVCEKINECTV2")]
 [ExportMetadata("Publisher", "K2VR Team")]
 [ExportMetadata("Website", "https://github.com/KinectToVR/plugin_KinectV2")]
 public class KinectV2 : ITrackingDevice
@@ -86,8 +80,8 @@ public class KinectV2 : ITrackingDevice
     public string DeviceStatusString => PluginLoaded
         ? DeviceStatus switch
         {
-            0 => Host.RequestLocalizedString("/Plugins/KinectV2/Statuses/Success", DeviceData.Guid),
-            1 => Host.RequestLocalizedString("/Plugins/KinectV2/Statuses/NotAvailable", DeviceData.Guid),
+            0 => Host.RequestLocalizedString("/Plugins/KinectV2/Statuses/Success"),
+            1 => Host.RequestLocalizedString("/Plugins/KinectV2/Statuses/NotAvailable"),
             _ => $"Undefined: {DeviceStatus}\nE_UNDEFINED\nSomething weird has happened, though we can't tell what."
         }
         : $"Undefined: {DeviceStatus}\nE_UNDEFINED\nSomething weird has happened, though we can't tell what.";
@@ -100,8 +94,7 @@ public class KinectV2 : ITrackingDevice
     public void Initialize()
     {
         IsInitialized = InitKinect();
-        Host.Log($"[{DeviceData.Guid}] Tried to initialize the Kinect " +
-                 $"sensor with status: {DeviceStatusString}", LogSeverity.Info);
+        Host.Log($"Tried to initialize the Kinect sensor with status: {DeviceStatusString}");
 
         // Try to start the stream
         InitializeSkeleton();
@@ -152,7 +145,7 @@ public class KinectV2 : ITrackingDevice
         }
         catch (Exception e)
         {
-            Host.Log($"Failed to open the Kinect sensor! Message: {e.Message}", LogSeverity.Info);
+            Host.Log($"Failed to open the Kinect sensor! Message: {e.Message}");
             return false;
         }
     }
