@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Numerics;
@@ -72,10 +73,10 @@ public class KinectV2 : ITrackingDevice
 
     public int DeviceStatus => KinectSensor?.IsAvailable ?? false ? 0 : 1;
 
-    public List<TrackedJoint> TrackedJoints { get; } =
+    public ObservableCollection<TrackedJoint> TrackedJoints { get; } =
         // Prepend all supported joints to the joints list
-        Enum.GetValues<TrackedJointType>().Where(x => x != TrackedJointType.JointManual)
-            .Select(x => new TrackedJoint { Name = x.ToString(), Role = x }).ToList();
+        new(Enum.GetValues<TrackedJointType>().Where(x => x != TrackedJointType.JointManual)
+            .Select(x => new TrackedJoint { Name = x.ToString(), Role = x }));
 
     public string DeviceStatusString => PluginLoaded
         ? DeviceStatus switch
