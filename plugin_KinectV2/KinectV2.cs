@@ -44,12 +44,12 @@ public class KinectV2 : ITrackingDevice
         { TrackedJointType.JointSpineWaist, JointType.SpineBase },
         { TrackedJointType.JointHipLeft, JointType.HipLeft },
         { TrackedJointType.JointKneeLeft, JointType.KneeLeft },
-        { TrackedJointType.JointAnkleLeft, JointType.AnkleLeft },
-        { TrackedJointType.JointFootLeft, JointType.FootLeft },
+        { TrackedJointType.JointFootLeft, JointType.AnkleLeft },
+        { TrackedJointType.JointFootTipLeft, JointType.FootLeft },
         { TrackedJointType.JointHipRight, JointType.HipRight },
         { TrackedJointType.JointKneeRight, JointType.KneeRight },
-        { TrackedJointType.JointAnkleRight, JointType.AnkleRight },
-        { TrackedJointType.JointFootRight, JointType.FootRight }
+        { TrackedJointType.JointFootRight, JointType.AnkleRight },
+        { TrackedJointType.JointFootTipRight, JointType.FootRight }
     };
 
     [Import(typeof(IAmethystHost))] private IAmethystHost Host { get; set; }
