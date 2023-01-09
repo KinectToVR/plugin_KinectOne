@@ -87,6 +87,8 @@ public class KinectV2 : ITrackingDevice
         }
         : $"Undefined: {DeviceStatus}\nE_UNDEFINED\nSomething weird has happened, though we can't tell what.";
 
+    public Uri ErrorDocsUri => new($"https://docs.k2vr.tech/{Host?.DocsLanguageCode ?? "en"}/one/troubleshooting/");
+
     public void OnLoad()
     {
         PluginLoaded = true;
