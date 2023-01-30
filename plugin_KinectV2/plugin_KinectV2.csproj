@@ -8,6 +8,7 @@
     <RuntimeIdentifiers>win10-x64</RuntimeIdentifiers>
     <PublishTrimmed>true</PublishTrimmed>
     <Platforms>x64</Platforms>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +20,10 @@
 
   <ItemGroup>
     <TrimmerRootAssembly Include="Microsoft.Kinect" />
+
+    <Reference Include="Microsoft.Kinect">
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_64\Microsoft.Kinect\v4.0_2.0.0.0__31bf3856ad364e35\Microsoft.Kinect.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
