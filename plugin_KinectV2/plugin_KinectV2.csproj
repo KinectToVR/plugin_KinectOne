@@ -30,5 +30,9 @@
     <Content Include="Assets\**">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <ContentWithTargetPath Include="Resources\Microsoft.Kinect.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>Microsoft.Kinect.dll</TargetPath>
+    </ContentWithTargetPath>
   </ItemGroup>
 </Project>
