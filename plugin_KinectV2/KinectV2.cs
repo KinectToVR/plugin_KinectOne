@@ -20,6 +20,7 @@ namespace plugin_KinectV2;
 [ExportMetadata("Name", "Xbox One Kinect")]
 [ExportMetadata("Guid", "K2VRTEAM-AME2-APII-DVCE-DVCEKINECTV2")]
 [ExportMetadata("Publisher", "K2VR Team")]
+[ExportMetadata("Version", "1.0.0.0")]
 [ExportMetadata("Website", "https://github.com/KinectToVR/plugin_KinectV2")]
 public class KinectV2 : ITrackingDevice
 {

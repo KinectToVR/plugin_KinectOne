@@ -31,4 +31,6 @@ jobs:
           automatic_release_tag: "latest"
           prerelease: true
           title: "plugin_KinectV2 Build Artifact"
-          files: "plugin_KinectV2/bin/Release/net7.0/win10-x64/publish/plugin_KinectV2.zip"
+          files: |
+            ./plugin_KinectV2/bin/Release/net7.0/win10-x64/publish/plugin_KinectV2.zip
+            ./external/manifest.json
