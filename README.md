@@ -1,5 +1,5 @@
 <h1 dir=auto>
-<b>Kinect V2</b>
+<b>Kinect One (V2)</b>
 <a style="color:#9966cc;" href="https://github.com/KinectToVR/Amethyst">Amethyst</a>
 <text>device plugin</text>
 </h1>
@@ -10,23 +10,23 @@ This project is licensed under the GNU GPL v3 License
 ## **Overview**
 This repo is a pure implementation of the `ITrackingDevice` interface,  
 providing Amethyst support for the Xbox One Kinect, using the 2.0 SDK.  
-Both the handler and the plugin itself ([available here](https://github.com/KinectToVR/plugin_KinectV2/tree/main/plugin_KinectV2)) are written in C#
+Both the handler and the plugin itself ([available here](https://github.com/KinectToVR/plugin_KinectOne/tree/main/plugin_KinectOne)) are written in C#
 
 ## **Downloads**
-You're going to find built plugins in [repo Releases](https://github.com/KinectToVR/plugin_KinectV2/releases/latest).
+You're going to find built plugins in [repo Releases](https://github.com/KinectToVR/plugin_KinectOne/releases/latest).
 
 ## **Build & Deploy**
-Both build and deployment instructions [are available here](https://github.com/KinectToVR/plugin_KinectV2/blob/main/.github/workflows/build.yml).
+Both build and deployment instructions [are available here](https://github.com/KinectToVR/plugin_KinectOne/blob/main/.github/workflows/build.yml).
  - Ensure you have the Kinect SDK 2.0 (2.2) installed ([from here](https://www.microsoft.com/en-us/download/details.aspx?id=44561) or nuget)
  - Open in Visual Studio and publish using the prepared publish profile  
-   (`plugin_KinectV2` → `Publish` → `Publish` → `Open folder`)
+   (`plugin_KinectOne` → `Publish` → `Publish` → `Open folder`)
  - Copy the published plugin to the `plugins` folder of your local Amethyst installation  
    or register by adding it to `$env:AppData\Amethyst\amethystpaths.k2path`
    ```jsonc
    {
     "external_plugins": [
         // Add the published plugin path here, this is an example:
-        "F:\\source\\repos\\plugin_KinectV2\\plugin_KinectV2\\bin\\Release\\Publish"
+        "F:\\source\\repos\\plugin_KinectOne\\plugin_KinectOne\\bin\\Release\\Publish"
     ]
    }
    ```

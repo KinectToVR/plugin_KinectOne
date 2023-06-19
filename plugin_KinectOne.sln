@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33103.201
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "plugin_KinectV2", "plugin_KinectV2\plugin_KinectV2.csproj", "{3C5DB9DE-D479-4160-815D-7B664F6AC8EF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "plugin_KinectOne", "plugin_KinectOne\plugin_KinectOne.csproj", "{3C5DB9DE-D479-4160-815D-7B664F6AC8EF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

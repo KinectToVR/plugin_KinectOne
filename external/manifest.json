@@ -1,7 +1,7 @@
 {
   "version": "1.0.0.0",
   "display_name": "Xbox One Kinect",
-  "download":  "plugin_KinectV2.zip",
+  "download":  "plugin_KinectOne.zip",
   "changelog": "Allow Microsoft.Kinect trimming as we're replacing it anyway.",
   "guid": "K2VRTEAM-AME2-APII-DVCE-DVCEKINECTV2"
 }

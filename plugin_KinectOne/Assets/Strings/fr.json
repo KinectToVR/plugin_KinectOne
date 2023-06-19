@@ -2,11 +2,11 @@
   "language": "fr",
   "messages": [
     {
-      "id": "/Plugins/KinectV2/Statuses/Success",
+      "id": "/Plugins/KinectOne/Statuses/Success",
       "translation": "Succès!\nS_OK\nTout fonctionne!"
     },
     {
-      "id": "/Plugins/KinectV2/Statuses/NotAvailable",
+      "id": "/Plugins/KinectOne/Statuses/NotAvailable",
       "translation": "Capteur non disponible!\nE_NOTAVAILABLE\nVérifiez que la Kinect est bien connectée via USB et alimentation."
     }
   ]

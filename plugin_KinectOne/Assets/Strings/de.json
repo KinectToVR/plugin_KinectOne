@@ -2,11 +2,11 @@
   "language": "de",
   "messages": [
     {
-      "id": "/Plugins/KinectV2/Statuses/Success",
+      "id": "/Plugins/KinectOne/Statuses/Success",
       "translation": "Erfolg!\nS_OK\nAlles ist gut!"
     },
     {
-      "id": "/Plugins/KinectV2/Statuses/NotAvailable",
+      "id": "/Plugins/KinectOne/Statuses/NotAvailable",
       "translation": "Sensor nicht verfügbar!\nE_NOTAVAILABLE\nÜberprüfe, ob Kinect an die USB- und Netzstecker des PCs angeschlossen ist."
     }
   ]

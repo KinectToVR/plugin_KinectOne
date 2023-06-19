@@ -2,11 +2,11 @@
   "language": "ru",
   "messages": [
     {
-      "id": "/Plugins/KinectV2/Statuses/Success",
+      "id": "/Plugins/KinectOne/Statuses/Success",
       "translation": "Успешно!\nS_OK\nВсе работает!"
     },
     {
-      "id": "/Plugins/KinectV2/Statuses/NotAvailable",
+      "id": "/Plugins/KinectOne/Statuses/NotAvailable",
       "translation": "Сенсор недоступен!\nE_NOTAVAILABLE\nУбедитесь, что Kinect подключен к блоку питания и USB-порту компьютера."
     }
   ]

@@ -14,15 +14,15 @@ using Microsoft.Kinect;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace plugin_KinectV2;
+namespace plugin_KinectOne;
 
 [Export(typeof(ITrackingDevice))]
 [ExportMetadata("Name", "Xbox One Kinect")]
 [ExportMetadata("Guid", "K2VRTEAM-AME2-APII-DVCE-DVCEKINECTV2")]
 [ExportMetadata("Publisher", "K2VR Team")]
 [ExportMetadata("Version", "1.0.0.0")]
-[ExportMetadata("Website", "https://github.com/KinectToVR/plugin_KinectV2")]
-public class KinectV2 : ITrackingDevice
+[ExportMetadata("Website", "https://github.com/KinectToVR/plugin_KinectOne")]
+public class KinectOne : ITrackingDevice
 {
     private static readonly SortedDictionary<TrackedJointType, JointType> KinectJointTypeDictionary = new()
     {
@@ -82,8 +82,8 @@ public class KinectV2 : ITrackingDevice
     public string DeviceStatusString => PluginLoaded
         ? DeviceStatus switch
         {
-            0 => Host.RequestLocalizedString("/Plugins/KinectV2/Statuses/Success"),
-            1 => Host.RequestLocalizedString("/Plugins/KinectV2/Statuses/NotAvailable"),
+            0 => Host.RequestLocalizedString("/Plugins/KinectOne/Statuses/Success"),
+            1 => Host.RequestLocalizedString("/Plugins/KinectOne/Statuses/NotAvailable"),
             _ => $"Undefined: {DeviceStatus}\nE_UNDEFINED\nSomething weird has happened, though we can't tell what."
         }
         : $"Undefined: {DeviceStatus}\nE_UNDEFINED\nSomething weird has happened, though we can't tell what.";

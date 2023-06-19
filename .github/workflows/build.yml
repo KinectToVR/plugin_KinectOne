@@ -17,12 +17,12 @@ jobs:
           dotnet-version: '7.0.x'
           
       - name: Restore and build (publish)
-        run: dotnet publish --configuration Release /p:PublishProfile=plugin_KinectV2\Properties\PublishProfiles\FolderProfile.pubxml
+        run: dotnet publish --configuration Release /p:PublishProfile=plugin_KinectOne\Properties\PublishProfiles\FolderProfile.pubxml
 
       - name: Pack published files
         run: |
-          cd plugin_KinectV2/bin/Release/net7.0/win10-x64/publish
-          7z a plugin_KinectV2.zip *
+          cd plugin_KinectOne/bin/Release/net7.0/win10-x64/publish
+          7z a plugin_KinectOne.zip *
         
       - name: Upload plugin artifact
         uses: "marvinpinto/action-automatic-releases@latest"
@@ -30,7 +30,7 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
           prerelease: true
-          title: "plugin_KinectV2 Build Artifact"
+          title: "plugin_KinectOne Build Artifact"
           files: |
-            ./plugin_KinectV2/bin/Release/net7.0/win10-x64/publish/plugin_KinectV2.zip
+            ./plugin_KinectOne/bin/Release/net7.0/win10-x64/publish/plugin_KinectOne.zip
             ./external/manifest.json
