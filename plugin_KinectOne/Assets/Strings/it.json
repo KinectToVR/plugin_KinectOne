@@ -1,0 +1,13 @@
+{
+  "language": "it",
+  "messages": [
+    {
+      "id": "/Plugins/KinectOne/Statuses/Success",
+      "translation": "Successo!\nS_OK\nVa tutto bene!"
+    },
+    {
+      "id": "/Plugins/KinectOne/Statuses/NotAvailable",
+      "translation": "Sensore non disponibile!\nE_NOTAVAILABLE\nControllare se il Kinect sia collegato tramite USB al tuo PC e sia alimentato dalla corrente."
+    }
+  ]
+}
