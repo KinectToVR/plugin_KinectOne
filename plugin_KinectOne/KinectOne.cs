@@ -22,6 +22,9 @@ namespace plugin_KinectOne;
 [ExportMetadata("Publisher", "K2VR Team")]
 [ExportMetadata("Version", "1.0.0.0")]
 [ExportMetadata("Website", "https://github.com/KinectToVR/plugin_KinectOne")]
+[ExportMetadata("DependencyLink", "https://docs.k2vr.tech/{0}/one/setup/")]
+[ExportMetadata("DependencySource", "https://download.microsoft.com/download/A/7/4/A74239EB-22C2-45A1-996C-2F8E564B28ED/KinectRuntime-v2.0_1409-Setup.exe")]
+[ExportMetadata("DependencySourceSilent", null)]
 public class KinectOne : ITrackingDevice
 {
     private static readonly SortedDictionary<TrackedJointType, JointType> KinectJointTypeDictionary = new()
