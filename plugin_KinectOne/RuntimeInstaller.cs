@@ -22,6 +22,11 @@ internal class RuntimeInstaller : IDependencyInstaller
 
     private string TemporaryFolderName { get; } = Guid.NewGuid().ToString().ToUpper();
 
+    public Task<bool> InstallTools(IProgress<InstallationProgress> progress)
+    {
+        return Task.FromResult(false); // Not supported (yet?)
+    }
+
     public bool IsInstalled
     {
         get
@@ -56,6 +61,9 @@ internal class RuntimeInstaller : IDependencyInstaller
             }
         }
     }
+
+    public bool ProvidesTools => false;
+    public bool ToolsInstalled => false;
 
     public async Task<bool> Install(IProgress<InstallationProgress> progress)
     {
@@ -287,7 +295,8 @@ internal class RuntimeInstaller : IDependencyInstaller
 
                 var msiExecutableStart = new ProcessStartInfo
                 {
-                    FileName = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Windows), @"System32\msiexec.exe"),
+                    FileName = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+                        @"System32\msiexec.exe"),
                     WorkingDirectory = Directory.GetParent(installFile)!.FullName,
                     Arguments = $"/i {installFile} /quiet /qn /norestart ALLUSERS=1",
                     CreateNoWindow = true,
