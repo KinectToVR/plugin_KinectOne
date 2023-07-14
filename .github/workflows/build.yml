@@ -16,9 +16,15 @@ jobs:
         with:
           dotnet-version: '7.0.x'
           
-      - name: Restore and build (publish)
-        run: dotnet publish --configuration Release /p:PublishProfile=plugin_KinectOne\Properties\PublishProfiles\FolderProfile.pubxml
+      - name: Add MSYS64 bin to PATH
+        run: echo "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
+
+      - name: Restore and build (publish)
+        run: msbuild plugin_KinectOne /restore /p:Platform=x64 /p:PlatformTarget=x64 /p:Configuration=Release /p:RuntimeIdentifier=win10-x64 /t:Publish /p:PublishProfile=plugin_KinectOne\Properties\PublishProfiles\FolderProfile.pubxml
+        
       - name: Pack published files
         run: |
           cd plugin_KinectOne/bin/Release/net7.0/win10-x64/publish

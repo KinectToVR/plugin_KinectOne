@@ -8,9 +8,23 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Amethyst.Plugins.Contract;
+using Microsoft.UI.Xaml.Controls;
 using RestSharp;
 
 namespace plugin_KinectOne;
+
+internal class SetupData : ICoreSetupData
+{
+    public object PluginIcon => new BitmapIcon
+    {
+        UriSource = new Uri(Path.Join(Directory.GetParent(
+                Assembly.GetExecutingAssembly().Location)!.FullName,
+            "Assets", "Resources", "icon.png"))
+    };
+
+    public string GroupName => "kinect";
+    public Type PluginType => typeof(ITrackingDevice);
+}
 
 internal class RuntimeInstaller : IDependencyInstaller
 {
@@ -64,6 +78,7 @@ internal class RuntimeInstaller : IDependencyInstaller
 
     public bool ProvidesTools => false;
     public bool ToolsInstalled => false;
+    public IDependencyInstaller.ILocalizationHost Host { get; set; }
 
     public async Task<bool> Install(IProgress<InstallationProgress> progress)
     {
@@ -87,7 +102,11 @@ internal class RuntimeInstaller : IDependencyInstaller
         {
             using var client = new RestClient();
             progress.Report(new InstallationProgress
-                { IsIndeterminate = true, StageTitle = "Downloading WiX Toolset..." });
+            {
+                IsIndeterminate = true,
+                StageTitle = Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Downloading/WiX") ??
+                             "Downloading WiX Toolset"
+            });
 
             // Create a stream reader using the received Installer Uri
             await using var stream =
@@ -104,7 +123,8 @@ internal class RuntimeInstaller : IDependencyInstaller
                 progress.Report(new InstallationProgress
                 {
                     IsIndeterminate = false, OverallProgress = innerProgress / 34670186.0,
-                    StageTitle = "Downloading WiX Toolset..."
+                    StageTitle = Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Downloading/WiX") ??
+                                 "Downloading WiX Toolset"
                 });
             }); // The runtime will do the rest for us
 
@@ -129,7 +149,9 @@ internal class RuntimeInstaller : IDependencyInstaller
                     progress.Report(new InstallationProgress
                     {
                         IsIndeterminate = true,
-                        StageTitle = $"Toolset extraction failed! Exception: {e.Message}"
+                        StageTitle =
+                            (Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Exceptions/WiX/Extraction") ??
+                             "Toolset extraction failed! Exception: {0}").Replace("{0}", e.Message)
                     });
 
                     return false;
@@ -143,7 +165,8 @@ internal class RuntimeInstaller : IDependencyInstaller
             progress.Report(new InstallationProgress
             {
                 IsIndeterminate = true,
-                StageTitle = $"Toolset installation failed! Exception: {e.Message}"
+                StageTitle = (Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Exceptions/WiX/Installation") ??
+                              "Toolset installation failed! Exception: {0}").Replace("{0}", e.Message)
             });
             return false;
         }
@@ -157,7 +180,11 @@ internal class RuntimeInstaller : IDependencyInstaller
         {
             using var client = new RestClient();
             progress.Report(new InstallationProgress
-                { IsIndeterminate = true, StageTitle = "Downloading Kinect for Xbox One Runtime..." });
+            {
+                IsIndeterminate = true,
+                StageTitle = Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Downloading/Runtime") ??
+                             "Downloading Kinect for Xbox One Runtime..."
+            });
 
             // Create a stream reader using the received Installer Uri
             await using var stream =
@@ -175,7 +202,8 @@ internal class RuntimeInstaller : IDependencyInstaller
                 {
                     IsIndeterminate = false,
                     OverallProgress = innerProgress / 93314296.0,
-                    StageTitle = "Downloading Kinect for Xbox One Runtime..."
+                    StageTitle = Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Downloading/Runtime") ??
+                                 "Downloading Kinect for Xbox One Runtime..."
                 });
             }); // The runtime will do the rest for us
 
@@ -196,7 +224,9 @@ internal class RuntimeInstaller : IDependencyInstaller
             progress.Report(new InstallationProgress
             {
                 IsIndeterminate = true,
-                StageTitle = $"Runtime installation failed! Exception: {e.Message}"
+                StageTitle =
+                    (Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Exceptions/Runtime/Installation") ??
+                     "Runtime installation failed! Exception: {0}").Replace("{0}", e.Message)
             });
             return false;
         }
@@ -208,7 +238,11 @@ internal class RuntimeInstaller : IDependencyInstaller
         try
         {
             progress.Report(new InstallationProgress
-                { IsIndeterminate = true, StageTitle = $"Unpacking {Path.GetFileName(sourceFile)}..." });
+            {
+                IsIndeterminate = true,
+                StageTitle = (Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Unpacking") ??
+                              "Unpacking {0}...").Replace("{0}", Path.GetFileName(sourceFile))
+            });
 
             // dark.exe {sourceFile} -x {outDir}
             var procStart = new ProcessStartInfo
@@ -258,7 +292,11 @@ internal class RuntimeInstaller : IDependencyInstaller
             {
                 // WTF
                 progress.Report(new InstallationProgress
-                    { IsIndeterminate = true, StageTitle = "Failed to execute dark.exe in the allocated time!" });
+                {
+                    IsIndeterminate = true, StageTitle =
+                        Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Dark/Error/Timeout") ??
+                        "Failed to execute dark.exe in the allocated time!"
+                });
 
                 proc.Kill();
             }
@@ -267,7 +305,11 @@ internal class RuntimeInstaller : IDependencyInstaller
             {
                 // Assume WiX failed
                 progress.Report(new InstallationProgress
-                    { IsIndeterminate = true, StageTitle = $"Dark.exe exited with error code: {proc.ExitCode}" });
+                {
+                    IsIndeterminate = true, StageTitle =
+                        (Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Dark/Error/Result") ??
+                         "Dark.exe exited with error code: {0}").Replace("{0}", proc.ExitCode.ToString())
+                });
 
                 return false;
             }
@@ -275,7 +317,11 @@ internal class RuntimeInstaller : IDependencyInstaller
         catch (Exception e)
         {
             progress.Report(new InstallationProgress
-                { IsIndeterminate = true, StageTitle = $"Exception: {e.Message}" });
+            {
+                IsIndeterminate = true, StageTitle =
+                    (Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Exceptions/Other") ??
+                     "Exception: {0}").Replace("{0}", e.Message)
+            });
 
             return false;
         }
@@ -291,7 +337,11 @@ internal class RuntimeInstaller : IDependencyInstaller
             {
                 // msi /qn /norestart
                 progress.Report(new InstallationProgress
-                    { IsIndeterminate = true, StageTitle = $"Installing {Path.GetFileName(installFile)}..." });
+                {
+                    IsIndeterminate = true, StageTitle =
+                        (Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Installing") ??
+                         "Installing {0}...").Replace("{0}", Path.GetFileName(installFile))
+                });
 
                 var msiExecutableStart = new ProcessStartInfo
                 {
@@ -311,7 +361,11 @@ internal class RuntimeInstaller : IDependencyInstaller
             catch (Exception e)
             {
                 progress.Report(new InstallationProgress
-                    { IsIndeterminate = true, StageTitle = $"Exception: {e.Message}" });
+                {
+                    IsIndeterminate = true, StageTitle =
+                        (Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Exceptions/Other") ??
+                         "Exception: {0}").Replace("{0}", e.Message)
+                });
 
                 return false;
             }

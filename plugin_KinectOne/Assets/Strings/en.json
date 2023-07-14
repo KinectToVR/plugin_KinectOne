@@ -8,6 +8,46 @@
     {
       "id": "/Plugins/KinectOne/Statuses/NotAvailable",
       "translation": "Sensor Unavailable!\nE_NOTAVAILABLE\nCheck if the Kinect is plugged in to your PC's USB and power plugs."
+    },
+    {
+      "id": "/Plugins/KinectOne/Stages/Downloading/WiX",
+      "translation": "Downloading WiX Toolset..."
+    },
+    {
+      "id": "/Plugins/KinectOne/Stages/Exceptions/WiX/Extraction",
+      "translation": "Toolset extraction failed! Exception: {0}"
+    },
+    {
+      "id": "/Plugins/KinectOne/Stages/Exceptions/WiX/Installation",
+      "translation": "Toolset installation failed! Exception: {0}"
+    },
+    {
+      "id": "/Plugins/KinectOne/Stages/Downloading/Runtime",
+      "translation": "Downloading Kinect for Xbox One Runtime..."
+    },
+    {
+      "id": "/Plugins/KinectOne/Stages/Exceptions/Runtime/Installation",
+      "translation": "Runtime installation failed! Exception: {0}"
+    },
+    {
+      "id": "/Plugins/KinectOne/Stages/Unpacking",
+      "translation": "Unpacking {0}..."
+    },
+    {
+      "id": "/Plugins/KinectOne/Stages/Installing",
+      "translation": "Installing {0}..."
+    },
+    {
+      "id": "/Plugins/KinectOne/Stages/Exceptions/Other",
+      "translation": "Exception: {0}"
+    },
+    {
+      "id": "/Plugins/KinectOne/Stages/Dark/Error/Timeout",
+      "translation": "Failed to execute dark.exe in the allocated time!"
+    },
+    {
+      "id": "/Plugins/KinectOne/Stages/Dark/Error/Result",
+      "translation": "Dark.exe exited with error code: {0}"
     }
   ]
 }

@@ -26,6 +26,7 @@ namespace plugin_KinectOne;
 [ExportMetadata("DependencySource",
     "https://download.microsoft.com/download/A/7/4/A74239EB-22C2-45A1-996C-2F8E564B28ED/KinectRuntime-v2.0_1409-Setup.exe")]
 [ExportMetadata("DependencyInstaller", typeof(RuntimeInstaller))]
+[ExportMetadata("CoreSetupData", typeof(SetupData))]
 public class KinectOne : ITrackingDevice
 {
     private static readonly SortedDictionary<TrackedJointType, JointType> KinectJointTypeDictionary = new()

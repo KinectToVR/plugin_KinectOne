@@ -8,15 +8,18 @@
     <RuntimeIdentifiers>win10-x64</RuntimeIdentifiers>
     <PublishTrimmed>true</PublishTrimmed>
     <Platforms>x64</Platforms>
+    <UseWinUI>true</UseWinUI>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Amethyst.Plugins.Contract" Version="0.2.16" />
+    <PackageReference Include="Amethyst.Plugins.Contract" Version="0.2.18" />
     <PackageReference Include="Microsoft.Kinect" Version="2.0.1410.19000" />
     <PackageReference Include="RestSharp" Version="108.0.3" />
     <PackageReference Include="System.ComponentModel.Composition" Version="8.0.0-preview.3.23174.8" />
     <PackageReference Include="System.ComponentModel.Composition.Registration" Version="8.0.0-preview.3.23174.8" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.3.230602002" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.25247-preview" />
   </ItemGroup>
 
   <ItemGroup>
