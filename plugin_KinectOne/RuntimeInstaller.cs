@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Amethyst.Plugins.Contract;
@@ -28,6 +29,24 @@ internal class SetupData : ICoreSetupData
 
 internal class RuntimeInstaller : IDependencyInstaller
 {
+    public IDependencyInstaller.ILocalizationHost Host { get; set; }
+
+    public List<IDependency> ListDependencies()
+    {
+        return new List<IDependency>
+        {
+            new KinectRuntime
+            {
+                Host = Host,
+                Name = Host?.RequestLocalizedString("/Plugins/KinectOne/Dependencies/Runtime/Name") ??
+                       "Kinect for Xbox One Runtime"
+            }
+        };
+    }
+}
+
+internal class KinectRuntime : IDependency
+{
     private const string WixDownloadUrl =
         "https://github.com/wixtoolset/wix3/releases/download/wix3112rtm/wix311-binaries.zip";
 
@@ -36,10 +55,10 @@ internal class RuntimeInstaller : IDependencyInstaller
 
     private string TemporaryFolderName { get; } = Guid.NewGuid().ToString().ToUpper();
 
-    public Task<bool> InstallTools(IProgress<InstallationProgress> progress)
-    {
-        return Task.FromResult(false); // Not supported (yet?)
-    }
+    public IDependencyInstaller.ILocalizationHost Host { get; set; }
+
+    public string Name { get; set; }
+    public bool IsMandatory => true;
 
     public bool IsInstalled
     {
@@ -76,18 +95,17 @@ internal class RuntimeInstaller : IDependencyInstaller
         }
     }
 
-    public bool ProvidesTools => false;
-    public bool ToolsInstalled => false;
-    public IDependencyInstaller.ILocalizationHost Host { get; set; }
-
-    public async Task<bool> Install(IProgress<InstallationProgress> progress)
+    public async Task<bool> Install(IProgress<InstallationProgress> progress, CancellationToken cancellationToken)
     {
+        // Amethyst will handle this exception for us anyway
+        cancellationToken.ThrowIfCancellationRequested();
+
         return
             // Download and unpack WiX
-            await SetupWix("WiXToolset", progress) &&
+            await SetupWix("WiXToolset", progress, cancellationToken) &&
 
             // Download, unpack, and install the runtime
-            await SetupRuntime("WiXToolset", progress);
+            await SetupRuntime("WiXToolset", progress, cancellationToken);
     }
 
     private async Task<StorageFolder> GetTempDirectory()
@@ -96,8 +114,12 @@ internal class RuntimeInstaller : IDependencyInstaller
             TemporaryFolderName, CreationCollisionOption.OpenIfExists);
     }
 
-    private async Task<bool> SetupWix(string outputFolder, IProgress<InstallationProgress> progress)
+    private async Task<bool> SetupWix(string outputFolder,
+        IProgress<InstallationProgress> progress, CancellationToken cancellationToken)
     {
+        // Amethyst will handle this exception for us anyway
+        cancellationToken.ThrowIfCancellationRequested();
+
         try
         {
             using var client = new RestClient();
@@ -118,15 +140,17 @@ internal class RuntimeInstaller : IDependencyInstaller
 
             // Create an output stream and push all the available data to it
             await using var fsInstallerFile = await installerFile.OpenStreamForWriteAsync();
-            await stream.CopyToWithProgressAsync(fsInstallerFile, innerProgress =>
-            {
-                progress.Report(new InstallationProgress
+            await stream.CopyToWithProgressAsync(fsInstallerFile, cancellationToken,
+                innerProgress =>
                 {
-                    IsIndeterminate = false, OverallProgress = innerProgress / 34670186.0,
-                    StageTitle = Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Downloading/WiX") ??
-                                 "Downloading WiX Toolset"
-                });
-            }); // The runtime will do the rest for us
+                    progress.Report(new InstallationProgress
+                    {
+                        IsIndeterminate = false,
+                        OverallProgress = innerProgress / 34670186.0,
+                        StageTitle = Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Downloading/WiX") ??
+                                     "Downloading WiX Toolset"
+                    });
+                }); // The runtime will do the rest for us
 
             // Close the file to unlock it
             fsInstallerFile.Close();
@@ -174,8 +198,12 @@ internal class RuntimeInstaller : IDependencyInstaller
         return false;
     }
 
-    private async Task<bool> SetupRuntime(string wixFolder, IProgress<InstallationProgress> progress)
+    private async Task<bool> SetupRuntime(string wixFolder,
+        IProgress<InstallationProgress> progress, CancellationToken cancellationToken)
     {
+        // Amethyst will handle this exception for us anyway
+        cancellationToken.ThrowIfCancellationRequested();
+
         try
         {
             using var client = new RestClient();
@@ -196,16 +224,17 @@ internal class RuntimeInstaller : IDependencyInstaller
 
             // Create an output stream and push all the available data to it
             await using var fsInstallerFile = await installerFile.OpenStreamForWriteAsync();
-            await stream.CopyToWithProgressAsync(fsInstallerFile, innerProgress =>
-            {
-                progress.Report(new InstallationProgress
+            await stream.CopyToWithProgressAsync(fsInstallerFile, cancellationToken,
+                innerProgress =>
                 {
-                    IsIndeterminate = false,
-                    OverallProgress = innerProgress / 93314296.0,
-                    StageTitle = Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Downloading/Runtime") ??
-                                 "Downloading Kinect for Xbox One Runtime..."
-                });
-            }); // The runtime will do the rest for us
+                    progress.Report(new InstallationProgress
+                    {
+                        IsIndeterminate = false,
+                        OverallProgress = innerProgress / 93314296.0,
+                        StageTitle = Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Downloading/Runtime") ??
+                                     "Downloading Kinect for Xbox One Runtime..."
+                    });
+                }); // The runtime will do the rest for us
 
             // Close the file to unlock it
             fsInstallerFile.Close();
@@ -213,11 +242,13 @@ internal class RuntimeInstaller : IDependencyInstaller
             return
                 // Extract all runtime files for the installation
                 await ExtractFiles(Path.GetFullPath(Path.Combine((await GetTempDirectory()).Path, wixFolder)),
-                    installerFile.Path, Path.Join((await GetTempDirectory()).Path, "KinectRuntime"), progress) &&
+                    installerFile.Path, Path.Join((await GetTempDirectory()).Path, "KinectRuntime"),
+                    progress, cancellationToken) &&
 
                 // Install the files using msi installers
                 InstallFiles(Directory.GetFiles(Path.Join((await GetTempDirectory()).Path,
-                    "KinectRuntime", "AttachedContainer"), "*.msi"), progress);
+                        "KinectRuntime", "AttachedContainer"), "*.msi"),
+                    progress, cancellationToken);
         }
         catch (Exception e)
         {
@@ -233,8 +264,11 @@ internal class RuntimeInstaller : IDependencyInstaller
     }
 
     private async Task<bool> ExtractFiles(string wixPath, string sourceFile, string outputFolder,
-        IProgress<InstallationProgress> progress)
+        IProgress<InstallationProgress> progress, CancellationToken cancellationToken)
     {
+        // Amethyst will handle this exception for us anyway
+        cancellationToken.ThrowIfCancellationRequested();
+
         try
         {
             progress.Report(new InstallationProgress
@@ -293,7 +327,8 @@ internal class RuntimeInstaller : IDependencyInstaller
                 // WTF
                 progress.Report(new InstallationProgress
                 {
-                    IsIndeterminate = true, StageTitle =
+                    IsIndeterminate = true,
+                    StageTitle =
                         Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Dark/Error/Timeout") ??
                         "Failed to execute dark.exe in the allocated time!"
                 });
@@ -306,7 +341,8 @@ internal class RuntimeInstaller : IDependencyInstaller
                 // Assume WiX failed
                 progress.Report(new InstallationProgress
                 {
-                    IsIndeterminate = true, StageTitle =
+                    IsIndeterminate = true,
+                    StageTitle =
                         (Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Dark/Error/Result") ??
                          "Dark.exe exited with error code: {0}").Replace("{0}", proc.ExitCode.ToString())
                 });
@@ -318,7 +354,8 @@ internal class RuntimeInstaller : IDependencyInstaller
         {
             progress.Report(new InstallationProgress
             {
-                IsIndeterminate = true, StageTitle =
+                IsIndeterminate = true,
+                StageTitle =
                     (Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Exceptions/Other") ??
                      "Exception: {0}").Replace("{0}", e.Message)
             });
@@ -329,8 +366,12 @@ internal class RuntimeInstaller : IDependencyInstaller
         return true;
     }
 
-    private bool InstallFiles(IEnumerable<string> files, IProgress<InstallationProgress> progress)
+    private bool InstallFiles(IEnumerable<string> files,
+        IProgress<InstallationProgress> progress, CancellationToken cancellationToken)
     {
+        // Amethyst will handle this exception for us anyway
+        cancellationToken.ThrowIfCancellationRequested();
+
         // Execute each install
         foreach (var installFile in files)
             try
@@ -338,7 +379,8 @@ internal class RuntimeInstaller : IDependencyInstaller
                 // msi /qn /norestart
                 progress.Report(new InstallationProgress
                 {
-                    IsIndeterminate = true, StageTitle =
+                    IsIndeterminate = true,
+                    StageTitle =
                         (Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Installing") ??
                          "Installing {0}...").Replace("{0}", Path.GetFileName(installFile))
                 });
@@ -362,7 +404,8 @@ internal class RuntimeInstaller : IDependencyInstaller
             {
                 progress.Report(new InstallationProgress
                 {
-                    IsIndeterminate = true, StageTitle =
+                    IsIndeterminate = true,
+                    StageTitle =
                         (Host?.RequestLocalizedString("/Plugins/KinectOne/Stages/Exceptions/Other") ??
                          "Exception: {0}").Replace("{0}", e.Message)
                 });
@@ -392,7 +435,8 @@ public static class RestExtensions
 public static class StreamExtensions
 {
     public static async Task CopyToWithProgressAsync(this Stream source,
-        Stream destination, Action<long> progress = null, int bufferSize = 10240)
+        Stream destination, CancellationToken cancellationToken,
+        Action<long> progress = null, int bufferSize = 10240)
     {
         var buffer = new byte[bufferSize];
         var total = 0L;
@@ -404,13 +448,13 @@ public static class StreamExtensions
             while (amtRead < bufferSize)
             {
                 var numBytes = await source.ReadAsync(
-                    buffer, amtRead, bufferSize - amtRead);
+                    buffer, amtRead, bufferSize - amtRead, cancellationToken);
                 if (numBytes == 0) break;
                 amtRead += numBytes;
             }
 
             total += amtRead;
-            await destination.WriteAsync(buffer, 0, amtRead);
+            await destination.WriteAsync(buffer, 0, amtRead, cancellationToken);
             progress?.Invoke(total);
         } while (amtRead == bufferSize);
     }

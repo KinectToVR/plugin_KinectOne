@@ -48,6 +48,10 @@
     {
       "id": "/Plugins/KinectOne/Stages/Dark/Error/Result",
       "translation": "Dark.exe exited with error code: {0}"
+    },
+    {
+      "id": "/Plugins/KinectOne/Dependencies/Runtime/Name",
+      "translation": "Kinect for Xbox One Runtime"
     }
   ]
 }
