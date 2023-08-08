@@ -31,4 +31,8 @@
       <TargetPath>Microsoft.Kinect.dll</TargetPath>
     </ContentWithTargetPath>
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Assets\Resources\Dependencies\" />
+  </ItemGroup>
 </Project>
