@@ -140,10 +140,32 @@ public class KinectOne : ITrackingDevice
         try
         {
             // Try to open the kinect sensor
-            KinectSensor.Open();
+            KinectSensor.Open(); // Open 1st
+            for (var i = 0; i < 20; i++)
+            {
+                // Refresh refresh refresh refresh
+                Thread.Sleep(200);
+                if (KinectSensor.IsAvailable) break;
+            }
 
-            // Necessary to allow kinect to become available behind the scenes
-            Thread.Sleep(2000);
+            // Get connected get connected
+            Thread.Sleep(1000);
+
+            try
+            {
+                // Try to open the kinect sensor
+                KinectSensor.Open(); // Open 2nd
+                for (var i = 0; i < 20; i++)
+                {
+                    // Wait for the device to initialize
+                    Thread.Sleep(200);
+                    if (KinectSensor.IsAvailable) break;
+                }
+            }
+            catch
+            {
+                // ignored
+            }
 
             // Register a watchdog (remove, add)
             KinectSensor.IsAvailableChanged -= StatusChangedHandler;
