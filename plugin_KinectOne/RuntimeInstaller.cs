@@ -88,16 +88,38 @@ internal class KinectRuntime : IDependency
         }
     }
 
-    public Task<bool> Install(IProgress<InstallationProgress> progress, CancellationToken cancellationToken)
+    public async Task<bool> Install(IProgress<InstallationProgress> progress, CancellationToken cancellationToken)
     {
         // Amethyst will handle this exception for us anyway
         cancellationToken.ThrowIfCancellationRequested();
-
-        return Task.FromResult(InstallFiles(new[]
+        var paths = new[]
         {
             Path.Join(Directory.GetParent(Assembly.GetExecutingAssembly().Location)!.FullName,
                 "Assets", "Resources", "Dependencies", "KinectRuntime-x64.msi")
-        }, progress, cancellationToken));
+        };
+
+        // Copy to temp if amethyst is packaged
+        // ReSharper disable once InvertIf
+        if (PackageUtils.IsAmethystPackaged)
+        {
+            // Create a shared folder with the dependencies
+            var dependenciesFolder = await ApplicationData.Current.TemporaryFolder.CreateFolderAsync(
+                Guid.NewGuid().ToString().ToUpper(), CreationCollisionOption.OpenIfExists);
+
+            // Copy all driver files to Amethyst's local data folder
+            new DirectoryInfo(Path.Join(Directory.GetParent(Assembly.GetExecutingAssembly().Location)!.FullName,
+                    "Assets", "Resources", "Dependencies"))
+                .CopyToFolder(dependenciesFolder.Path);
+
+            // Update the installation paths
+            paths = new[]
+            {
+                Path.Join(dependenciesFolder.Path, "KinectRuntime-x64.msi")
+            };
+        }
+
+        // Finally install the packages
+        return InstallFiles(paths, progress, cancellationToken);
     }
 
     private bool InstallFiles(IEnumerable<string> files,
