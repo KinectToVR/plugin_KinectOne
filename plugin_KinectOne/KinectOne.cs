@@ -102,11 +102,28 @@ public class KinectOne : ITrackingDevice
 
     public void Initialize()
     {
-        IsInitialized = InitKinect();
-        Host.Log($"Tried to initialize the Kinect sensor with status: {DeviceStatusString}");
+        try
+        {
+            try
+            {
+                if(InitKinect()) InitializeSkeleton(); // Init?
+                ShutdownInternal(false); // Shut down
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
 
-        // Try to start the stream
-        InitializeSkeleton();
+            IsInitialized = InitKinect();
+            Host.Log($"Tried to initialize the Kinect sensor with status: {DeviceStatusString}");
+
+            // Try to start the stream
+            InitializeSkeleton();
+        }
+        catch (Exception e)
+        {
+            Host.Log($"Failed to open the Kinect sensor! Message: {e.Message}");
+        }
     }
 
     public void Shutdown()
@@ -145,21 +162,6 @@ public class KinectOne : ITrackingDevice
 
         try
         {
-            try
-            {
-                // Try to open the kinect sensor
-                KinectSensor.Open(); // Open 0th
-                Thread.Sleep(500);
-
-                // First try to de-init the sensor
-                ShutdownInternal(false);
-                Thread.Sleep(500);
-            }
-            catch
-            {
-                // ignored
-            }
-
             // Try to open the kinect sensor
             KinectSensor.Open(); // Open 1st
             for (var i = 0; i < 20; i++)
