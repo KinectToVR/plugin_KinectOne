@@ -104,21 +104,8 @@ public class KinectOne : ITrackingDevice
     {
         try
         {
-            try
-            {
-                if(InitKinect()) InitializeSkeleton(); // Init?
-                ShutdownInternal(false); // Shut down
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
-
             IsInitialized = InitKinect();
             Host.Log($"Tried to initialize the Kinect sensor with status: {DeviceStatusString}");
-
-            // Try to start the stream
-            InitializeSkeleton();
         }
         catch (Exception e)
         {
@@ -158,10 +145,18 @@ public class KinectOne : ITrackingDevice
 
     private bool InitKinect()
     {
+        // One sensor is currently supported
         if ((KinectSensor = KinectSensor.GetDefault()) is null) return false;
+
+        // Open the reader for the body frames
+        BodyFrameReader = KinectSensor.BodyFrameSource.OpenReader();
 
         try
         {
+            // Unregister sensor events
+            KinectSensor.IsAvailableChanged -= StatusChangedHandler;
+            BodyFrameReader.FrameArrived -= OnBodyFrameArrivedHandler;
+
             // Try to open the kinect sensor
             KinectSensor.Open(); // Open 1st
             for (var i = 0; i < 20; i++)
@@ -174,25 +169,9 @@ public class KinectOne : ITrackingDevice
             // Get connected get connected
             Thread.Sleep(1000);
 
-            try
-            {
-                // Try to open the kinect sensor
-                KinectSensor.Open(); // Open 2nd
-                for (var i = 0; i < 20; i++)
-                {
-                    // Wait for the device to initialize
-                    Thread.Sleep(200);
-                    if (KinectSensor.IsAvailable) break;
-                }
-            }
-            catch
-            {
-                // ignored
-            }
-
-            // Register a watchdog (remove, add)
-            KinectSensor.IsAvailableChanged -= StatusChangedHandler;
+            // Register a sensor status event, new frame event
             KinectSensor.IsAvailableChanged += StatusChangedHandler;
+            BodyFrameReader.FrameArrived += OnBodyFrameArrivedHandler;
 
             // Check the status and return
             return KinectSensor.IsAvailable;
@@ -210,31 +189,21 @@ public class KinectOne : ITrackingDevice
         Host?.RefreshStatusInterface();
     }
 
-    private void InitializeSkeleton()
-    {
-        BodyFrameReader?.Dispose();
-        BodyFrameReader = KinectSensor.BodyFrameSource.OpenReader();
-
-        if (BodyFrameReader is null) return;
-
-        // Register a watchdog (remove, add)
-        BodyFrameReader.FrameArrived -= OnBodyFrameArrivedHandler;
-        BodyFrameReader.FrameArrived += OnBodyFrameArrivedHandler;
-    }
-
     private void OnBodyFrameArrivedHandler(object _, BodyFrameArrivedEventArgs args)
     {
         var dataReceived = false;
-        using var bodyFrame = args.FrameReference.AcquireFrame();
-        if (bodyFrame != null)
+        using (var bodyFrame = args.FrameReference.AcquireFrame())
         {
-            Bodies ??= new Body[bodyFrame.BodyCount];
+            if (bodyFrame != null)
+            {
+                Bodies ??= new Body[bodyFrame.BodyCount];
 
-            // The first time GetAndRefreshBodyData is called, Kinect will allocate each Body in the array.
-            // As long as those body objects are not disposed and not set to null in the array,
-            // those body objects will be re-used.
-            bodyFrame.GetAndRefreshBodyData(Bodies);
-            dataReceived = true;
+                // The first time GetAndRefreshBodyData is called, Kinect will allocate each Body in the array.
+                // As long as those body objects are not disposed and not set to null in the array,
+                // those body objects will be re-used.
+                bodyFrame.GetAndRefreshBodyData(Bodies);
+                dataReceived = true;
+            }
         }
 
         // Validate the result from the sensor
