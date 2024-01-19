@@ -1,15 +1,12 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Numerics;
-using System.Threading;
 using Amethyst.Plugins.Contract;
-using Microsoft.Kinect;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -20,68 +17,29 @@ namespace plugin_KinectOne;
 [ExportMetadata("Name", "Xbox One Kinect")]
 [ExportMetadata("Guid", "K2VRTEAM-AME2-APII-DVCE-DVCEKINECTV2")]
 [ExportMetadata("Publisher", "K2VR Team")]
-[ExportMetadata("Version", "1.0.0.0")]
-[ExportMetadata("Website", "https://github.com/KinectToVR/plugin_KinectOne")]
+[ExportMetadata("Version", "1.0.0.1")]
+[ExportMetadata("Website", "https://github.com/KimihikoAkayasaki/plugin_KinectOne")]
 [ExportMetadata("DependencyLink", "https://docs.k2vr.tech/{0}/one/setup/")]
 [ExportMetadata("DependencySource",
     "https://download.microsoft.com/download/A/7/4/A74239EB-22C2-45A1-996C-2F8E564B28ED/KinectRuntime-v2.0_1409-Setup.exe")]
 [ExportMetadata("DependencyInstaller", typeof(RuntimeInstaller))]
 [ExportMetadata("CoreSetupData", typeof(SetupData))]
-public class KinectOne : ITrackingDevice
+public class KinectOne : KinectHandler.KinectHandler, ITrackingDevice
 {
-    private static readonly SortedDictionary<TrackedJointType, JointType> KinectJointTypeDictionary = new()
-    {
-        { TrackedJointType.JointHead, JointType.Head },
-        { TrackedJointType.JointNeck, JointType.Neck },
-        { TrackedJointType.JointSpineShoulder, JointType.SpineShoulder },
-        { TrackedJointType.JointShoulderLeft, JointType.ShoulderLeft },
-        { TrackedJointType.JointElbowLeft, JointType.ElbowLeft },
-        { TrackedJointType.JointWristLeft, JointType.WristLeft },
-        { TrackedJointType.JointHandLeft, JointType.HandLeft },
-        { TrackedJointType.JointHandTipLeft, JointType.HandTipLeft },
-        { TrackedJointType.JointThumbLeft, JointType.ThumbLeft },
-        { TrackedJointType.JointShoulderRight, JointType.ShoulderRight },
-        { TrackedJointType.JointElbowRight, JointType.ElbowRight },
-        { TrackedJointType.JointWristRight, JointType.WristRight },
-        { TrackedJointType.JointHandRight, JointType.HandRight },
-        { TrackedJointType.JointHandTipRight, JointType.HandTipRight },
-        { TrackedJointType.JointThumbRight, JointType.ThumbRight },
-        { TrackedJointType.JointSpineMiddle, JointType.SpineMid },
-        { TrackedJointType.JointSpineWaist, JointType.SpineBase },
-        { TrackedJointType.JointHipLeft, JointType.HipLeft },
-        { TrackedJointType.JointKneeLeft, JointType.KneeLeft },
-        { TrackedJointType.JointFootLeft, JointType.AnkleLeft },
-        { TrackedJointType.JointFootTipLeft, JointType.FootLeft },
-        { TrackedJointType.JointHipRight, JointType.HipRight },
-        { TrackedJointType.JointKneeRight, JointType.KneeRight },
-        { TrackedJointType.JointFootRight, JointType.AnkleRight },
-        { TrackedJointType.JointFootTipRight, JointType.FootRight }
-    };
-
     [Import(typeof(IAmethystHost))] private IAmethystHost Host { get; set; }
 
-    private KinectSensor KinectSensor { get; set; }
-    private BodyFrameReader BodyFrameReader { get; set; }
-    private Body[] Bodies { get; set; }
     private bool PluginLoaded { get; set; }
-
     public bool IsPositionFilterBlockingEnabled => false;
     public bool IsPhysicsOverrideEnabled => false;
-    public bool IsSelfUpdateEnabled => true;
+    public bool IsSelfUpdateEnabled => false;
     public bool IsFlipSupported => true;
     public bool IsAppOrientationSupported => true;
-    public bool IsSettingsDaemonSupported => false;
     public object SettingsInterfaceRoot => null;
-
-    public bool IsInitialized { get; private set; }
-
-    public bool IsSkeletonTracked { get; private set; }
-
-    public int DeviceStatus => KinectSensor?.IsAvailable ?? false ? 0 : 1;
 
     public ObservableCollection<TrackedJoint> TrackedJoints { get; } =
         // Prepend all supported joints to the joints list
-        new(Enum.GetValues<TrackedJointType>().Where(x => x != TrackedJointType.JointManual)
+        new(Enum.GetValues<TrackedJointType>()
+            .Where(x => x is not TrackedJointType.JointManual)
             .Select(x => new TrackedJoint { Name = x.ToString(), Role = x }));
 
     public string DeviceStatusString => PluginLoaded
@@ -102,25 +60,50 @@ public class KinectOne : ITrackingDevice
 
     public void Initialize()
     {
-        try
+        switch (InitializeKinect())
         {
-            IsInitialized = InitKinect();
-            Host.Log($"Tried to initialize the Kinect sensor with status: {DeviceStatusString}");
-        }
-        catch (Exception e)
-        {
-            Host.Log($"Failed to open the Kinect sensor! Message: {e.Message}");
+            case 0:
+                Host.Log($"Tried to initialize the Kinect sensor with status: {DeviceStatusString}");
+                break;
+            case 1:
+                Host.Log($"Couldn't initialize the Kinect sensor! Status: {DeviceStatusString}", LogSeverity.Warning);
+                break;
+            default:
+                Host.Log("Tried to initialize the Kinect, but a native exception occurred!", LogSeverity.Error);
+                break;
         }
     }
 
     public void Shutdown()
     {
-        ShutdownInternal();
+        switch (ShutdownKinect())
+        {
+            case 0:
+                Host.Log($"Tried to shutdown the Kinect sensor with status: {DeviceStatusString}");
+                break;
+            case 1:
+                Host.Log($"Kinect sensor is already shut down! Status: {DeviceStatusString}", LogSeverity.Warning);
+                break;
+            case -2:
+                Host.Log("Tried to shutdown the Kinect sensor, but a SEH exception occurred!", LogSeverity.Error);
+                break;
+            default:
+                Host.Log("Tried to shutdown the Kinect sensor, but a native exception occurred!", LogSeverity.Error);
+                break;
+        }
     }
 
     public void Update()
     {
-        // ignored
+        var trackedJoints = GetTrackedKinectJoints();
+        trackedJoints.ForEach(x =>
+        {
+            TrackedJoints[trackedJoints.IndexOf(x)].TrackingState =
+                (TrackedJointState)x.TrackingState;
+
+            TrackedJoints[trackedJoints.IndexOf(x)].Position = x.Position.Safe();
+            TrackedJoints[trackedJoints.IndexOf(x)].Orientation = x.Orientation.Safe();
+        });
     }
 
     public void SignalJoint(int jointId)
@@ -128,155 +111,30 @@ public class KinectOne : ITrackingDevice
         // ignored
     }
 
-    private void ShutdownInternal(bool unInitialize = true)
+    public override void StatusChangedHandler()
     {
-        // BodyFrameReader is IDisposable
-        BodyFrameReader?.Dispose();
-        BodyFrameReader = null;
+        // The Kinect sensor requested a refresh
+        InitializeKinect();
 
-        // Close the kinect sensor
-        KinectSensor?.Close();
-        KinectSensor = null;
-
-        // Mark as not initialized
-        if (unInitialize)
-            IsInitialized = false;
-    }
-
-    private bool InitKinect()
-    {
-        // One sensor is currently supported
-        if ((KinectSensor = KinectSensor.GetDefault()) is null) return false;
-
-        // Open the reader for the body frames
-        BodyFrameReader = KinectSensor.BodyFrameSource.OpenReader();
-
-        try
-        {
-            // Unregister sensor events
-            KinectSensor.IsAvailableChanged -= StatusChangedHandler;
-            BodyFrameReader.FrameArrived -= OnBodyFrameArrivedHandler;
-
-            // Try to open the kinect sensor
-            KinectSensor.Open(); // Open 1st
-            for (var i = 0; i < 20; i++)
-            {
-                // Refresh refresh refresh refresh
-                Thread.Sleep(200);
-                if (KinectSensor.IsAvailable) break;
-            }
-
-            // Get connected get connected
-            Thread.Sleep(1000);
-
-            // Register a sensor status event, new frame event
-            KinectSensor.IsAvailableChanged += StatusChangedHandler;
-            BodyFrameReader.FrameArrived += OnBodyFrameArrivedHandler;
-
-            // Check the status and return
-            return KinectSensor.IsAvailable;
-        }
-        catch (Exception e)
-        {
-            Host.Log($"Failed to open the Kinect sensor! Message: {e.Message}");
-            return false;
-        }
-    }
-
-    private void StatusChangedHandler(object o, IsAvailableChangedEventArgs isAvailableChangedEventArgs)
-    {
-        // Make AME refresh our plugin
+        // Request a refresh of the status UI
         Host?.RefreshStatusInterface();
-    }
-
-    private void OnBodyFrameArrivedHandler(object _, BodyFrameArrivedEventArgs args)
-    {
-        var dataReceived = false;
-        using (var bodyFrame = args.FrameReference.AcquireFrame())
-        {
-            if (bodyFrame != null)
-            {
-                Bodies ??= new Body[bodyFrame.BodyCount];
-
-                // The first time GetAndRefreshBodyData is called, Kinect will allocate each Body in the array.
-                // As long as those body objects are not disposed and not set to null in the array,
-                // those body objects will be re-used.
-                bodyFrame.GetAndRefreshBodyData(Bodies);
-                dataReceived = true;
-            }
-        }
-
-        // Validate the result from the sensor
-        if (!dataReceived || Bodies.Length <= 0)
-        {
-            IsSkeletonTracked = false;
-            return; // Give up this time
-        }
-
-        // Check if any body is tracked, copy the status
-        IsSkeletonTracked = Bodies.Any(x => x.IsTracked);
-        if (!IsSkeletonTracked) return; // Give up
-
-        // Get the first tracked body, decompose
-        var body = Bodies.First(x => x.IsTracked);
-        var jointPositions = body.Joints;
-        var jointOrientations = body.JointOrientations;
-
-        // Copy positions, orientations and states from the sensor
-        // We should be able to address our joints by [] because
-        // they're prepended via Enum.GetValues<TrackedJointType>
-        foreach (var (appJoint, kinectJoint) in KinectJointTypeDictionary)
-        {
-            var tracker = TrackedJoints[(int)appJoint];
-            (tracker.Position, tracker.Orientation, tracker.TrackingState) = (
-                jointPositions.First(x => x.Key == kinectJoint).Value.PoseVector(),
-                jointOrientations.First(x => x.Key == kinectJoint).Value.OrientationQuaternion(),
-                (TrackedJointState)jointPositions.First(x => x.Key == kinectJoint).Value.TrackingState);
-        }
-
-        //// Fix orientations: knees and elbows appear sideways (left)
-        //TrackedJoints[(int)TrackedJointType.JointAnkleLeft].JointOrientation *=
-        //    Quaternion.CreateFromYawPitchRoll(0f, (float)(-Math.PI / 3.0), 0f);
-        //TrackedJoints[(int)TrackedJointType.JointKneeLeft].JointOrientation *=
-        //    Quaternion.CreateFromYawPitchRoll(0f, (float)(-Math.PI / 3.0), 0f);
-
-        //// Fix orientations: knees and elbows appear sideways (right)
-        //TrackedJoints[(int)TrackedJointType.JointAnkleRight].JointOrientation *=
-        //    Quaternion.CreateFromYawPitchRoll(0f, (float)(Math.PI / 3.0), 0f);
-        //TrackedJoints[(int)TrackedJointType.JointKneeRight].JointOrientation *=
-        //    Quaternion.CreateFromYawPitchRoll(0f, (float)(Math.PI / 3.0), 0f);
-
-        //foreach (var (appJoint, kinectJoint) in KinectJointTypeDictionary)
-        //{
-        //    var tracker = TrackedJoints.First(x => x.Role == appJoint);
-        //    (tracker.JointPosition, tracker.JointOrientation, tracker.TrackingState) = (
-        //        jointPositions.First(x => x.Key == kinectJoint).Value.PoseVector(),
-        //        jointOrientations.First(x => x.Key == kinectJoint).Value.OrientationQuaternion(),
-        //        KinectJointStateDictionary[
-        //            jointPositions.First(x => x.Key == kinectJoint).Value.TrackingState]);
-        //}
-
-        //TrackedJoints.First(x => x.Role is TrackedJointType.JointAnkleLeft).JointOrientation *=
-        //    Quaternion.CreateFromYawPitchRoll(0f, (float)(-Math.PI / 3.0), 0f);
-        //TrackedJoints.First(x => x.Role is TrackedJointType.JointKneeLeft).JointOrientation *=
-        //    Quaternion.CreateFromYawPitchRoll(0f, (float)(-Math.PI / 3.0), 0f);
-
-        //TrackedJoints.First(x => x.Role is TrackedJointType.JointAnkleRight).JointOrientation *=
-        //    Quaternion.CreateFromYawPitchRoll(0f, (float)(Math.PI / 3.0), 0f);
-        //TrackedJoints.First(x => x.Role is TrackedJointType.JointKneeRight).JointOrientation *=
-        //    Quaternion.CreateFromYawPitchRoll(0f, (float)(Math.PI / 3.0), 0f);
     }
 }
 
-public static class JointExtensions
+internal static class PoseUtils
 {
-    public static Vector3 PoseVector(this Joint joint)
+    public static Quaternion Safe(this Quaternion q)
     {
-        return new Vector3(joint.Position.X, joint.Position.Y, joint.Position.Z);
+        return (q.X is 0 && q.Y is 0 && q.Z is 0 && q.W is 0) ||
+               float.IsNaN(q.X) || float.IsNaN(q.Y) || float.IsNaN(q.Z) || float.IsNaN(q.W)
+            ? Quaternion.Identity // Return a placeholder quaternion
+            : q; // If everything is fine, return the actual orientation
     }
 
-    public static Quaternion OrientationQuaternion(this JointOrientation joint)
+    public static Vector3 Safe(this Vector3 v)
     {
-        return new Quaternion(joint.Orientation.X, joint.Orientation.Y, joint.Orientation.Z, joint.Orientation.W);
+        return float.IsNaN(v.X) || float.IsNaN(v.Y) || float.IsNaN(v.Z)
+            ? Vector3.Zero // Return a placeholder position vector
+            : v; // If everything is fine, return the actual orientation
     }
 }

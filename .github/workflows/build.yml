@@ -2,6 +2,9 @@ name: Check-Build
 
 on: [push]
 
+env:
+  KINECTSDK20_DIR: D:\Microsoft SDKs\Kinect\v2.0_1409\
+
 jobs:
   build:
 
@@ -12,6 +15,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          lfs: 'true'
+
       - uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '7.0.x'
@@ -19,6 +25,14 @@ jobs:
       - name: Add MSYS64 bin to PATH
         run: echo "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
+      - name: Install Kinect SDK20
+        shell: powershell
+        run: |
+          New-Item -ItemType directory KinectSDK-v2.0 | Out-Null
+          wget "https://download.microsoft.com/download/F/2/D/F2D1012E-3BC6-49C5-B8B3-5ACFF58AF7B8/KinectSDK-v2.0_1409-Setup.exe" -OutFile KinectSDK-v2.0-Setup.exe
+          & "C:\Program Files (x86)\WiX Toolset v3.11\bin\dark.exe" KinectSDK-v2.0-Setup.exe -x KinectSDK-v2.0
+          Start-Process msiexec -ArgumentList "/a ${{ github.workspace }}\KinectSDK-v2.0\AttachedContainer\KinectSDK-v2.0_1409-x64.msi /passive /qn" -Wait -NoNewWindow
+          
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v1.1
 
@@ -27,7 +41,7 @@ jobs:
         
       - name: Pack published files
         run: |
-          cd plugin_KinectOne/bin/Release/net7.0/win10-x64/publish
+          cd plugin_KinectOne/bin/Release/Publish
           7z a plugin_KinectOne.zip *
         
       - name: Upload plugin artifact
@@ -38,5 +52,5 @@ jobs:
           prerelease: true
           title: "plugin_KinectOne Build Artifact"
           files: |
-            ./plugin_KinectOne/bin/Release/net7.0/win10-x64/publish/plugin_KinectOne.zip
+            ./plugin_KinectOne/bin/Release/Publish/plugin_KinectOne.zip
             ./external/manifest.json

@@ -9,17 +9,19 @@
     <PublishTrimmed>true</PublishTrimmed>
     <Platforms>x64</Platforms>
     <UseWinUI>true</UseWinUI>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Amethyst.Plugins.Contract" Version="0.2.22" />
-    <PackageReference Include="Microsoft.Kinect" Version="2.0.1410.19000" />
     <PackageReference Include="RestSharp" Version="108.0.3" />
     <PackageReference Include="System.ComponentModel.Composition" Version="8.0.0" />
     <PackageReference Include="System.ComponentModel.Composition.Registration" Version="8.0.0" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.231115000" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.25247-preview" />
+      <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.231115000" />
+      <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.25247-preview" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\KinectHandler\KinectHandler.vcxproj" />
   </ItemGroup>
 
   <ItemGroup>
