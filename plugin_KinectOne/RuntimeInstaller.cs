@@ -58,7 +58,7 @@ internal class KinectRuntime : IDependency
             try
             {
                 // Well, this is pretty much all we need for the plugin to be loaded
-                return File.Exists(
+                return File.Exists(@"C:\Windows\System32\Kinect20.dll") && File.Exists(
                     @"C:\Windows\Microsoft.NET\assembly\GAC_64\Microsoft.Kinect\v4.0_2.0.0.0__31bf3856ad364e35\Microsoft.Kinect.dll");
             }
             catch (Exception)
