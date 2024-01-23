@@ -214,11 +214,11 @@ class KinectWrapper
         {JointSpineWaist, JointType_SpineBase},
         {JointHipLeft, JointType_HipLeft},
         {JointKneeLeft, JointType_KneeLeft},
-        {JointFootLeft, JointType_FootLeft},
+        {JointFootLeft, JointType_AnkleLeft},
         {JointFootTipLeft, JointType_FootLeft},
         {JointHipRight, JointType_HipRight},
         {JointKneeRight, JointType_KneeRight},
-        {JointFootRight, JointType_FootRight},
+        {JointFootRight, JointType_AnkleRight},
         {JointFootTipRight, JointType_FootRight},
     };
 
