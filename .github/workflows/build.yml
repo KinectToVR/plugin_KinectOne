@@ -30,7 +30,7 @@ jobs:
         run: |
           New-Item -ItemType directory KinectSDK-v2.0 | Out-Null
           wget "https://download.microsoft.com/download/F/2/D/F2D1012E-3BC6-49C5-B8B3-5ACFF58AF7B8/KinectSDK-v2.0_1409-Setup.exe" -OutFile KinectSDK-v2.0-Setup.exe
-          & "C:\Program Files (x86)\WiX Toolset v3.11\bin\dark.exe" KinectSDK-v2.0-Setup.exe -x KinectSDK-v2.0
+          & "C:\Program Files (x86)\WiX Toolset v3.14\bin\dark.exe" KinectSDK-v2.0-Setup.exe -x KinectSDK-v2.0
           Start-Process msiexec -ArgumentList "/a ${{ github.workspace }}\KinectSDK-v2.0\AttachedContainer\KinectSDK-v2.0_1409-x64.msi /passive /qn" -Wait -NoNewWindow
           
       - name: Add MSBuild to PATH
