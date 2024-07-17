@@ -28,7 +28,7 @@ internal class SetupData : ICoreSetupData
 
 internal class RuntimeInstaller : IDependencyInstaller
 {
-    public IDependencyInstaller.ILocalizationHost Host { get; set; }
+	public IDependencyInstaller.ILocalizationHost Host { get; set; }
 
     public List<IDependency> ListDependencies()
     {
@@ -42,6 +42,8 @@ internal class RuntimeInstaller : IDependencyInstaller
             }
         };
     }
+
+    public List<IFix> ListFixes() => new();
 }
 
 internal class KinectRuntime : IDependency
