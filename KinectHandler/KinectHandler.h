@@ -52,6 +52,17 @@ namespace KinectHandler
             // implemented in the c# handler
         }
 
+        array<BYTE>^ GetImageBuffer()
+        {
+            if (!IsInitialized || !kinect_->camera_enabled()) return __nullptr;
+            const auto& [unmanagedBuffer, size] = kinect_->color_buffer();
+            if (size <= 0) return __nullptr;
+
+            auto data = gcnew array<byte>(size); // Managed image placeholder
+            Marshal::Copy(IntPtr(unmanagedBuffer), data, 0, size);
+            return data; // Return managed array of bytes for our camera image
+        }
+
         List<KinectJoint^>^ GetTrackedKinectJoints()
         {
             if (!IsInitialized) return gcnew List<KinectJoint^>;
@@ -102,9 +113,34 @@ namespace KinectHandler
             int get() { return kinect_->status_result(); }
         }
 
+        property bool IsCameraEnabled
+        {
+            bool get() { return kinect_->camera_enabled(); }
+            void set(const bool value) { kinect_->camera_enabled(value); }
+        }
+
         property bool IsSettingsDaemonSupported
         {
             bool get() { return DeviceStatus == 0; }
+        }
+
+        property int CameraImageWidth
+        {
+            int get() { return kinect_->CameraImageSize().first; }
+        }
+
+        property int CameraImageHeight
+        {
+            int get() { return kinect_->CameraImageSize().second; }
+        }
+
+        Drawing::Size MapCoordinate(Vector3 position)
+        {
+            if (!IsInitialized) return Drawing::Size::Empty;
+            const auto& [width, height] =
+                kinect_->MapCoordinate(CameraSpacePoint{position.X, position.Y, position.Z});
+
+            return Drawing::Size(width, height);
         }
 
         int InitializeKinect()

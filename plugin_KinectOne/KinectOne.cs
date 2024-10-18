@@ -4,9 +4,12 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel.Composition;
+using System.Drawing;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices.WindowsRuntime;
 using Amethyst.Plugins.Contract;
+using Microsoft.UI.Xaml.Media.Imaging;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -35,6 +38,7 @@ public class KinectOne : KinectHandler.KinectHandler, ITrackingDevice
     public bool IsFlipSupported => true;
     public bool IsAppOrientationSupported => true;
     public object SettingsInterfaceRoot => null;
+    public WriteableBitmap CameraImage { get; set; }
 
     public ObservableCollection<TrackedJoint> TrackedJoints { get; } =
         // Prepend all supported joints to the joints list
@@ -56,6 +60,8 @@ public class KinectOne : KinectHandler.KinectHandler, ITrackingDevice
     public void OnLoad()
     {
         PluginLoaded = true;
+
+        CameraImage = new WriteableBitmap(CameraImageWidth, CameraImageHeight);
     }
 
     public void Initialize()
@@ -104,6 +110,16 @@ public class KinectOne : KinectHandler.KinectHandler, ITrackingDevice
             TrackedJoints[trackedJoints.IndexOf(x)].Position = x.Position.Safe();
             TrackedJoints[trackedJoints.IndexOf(x)].Orientation = x.Orientation.Safe();
         });
+
+        // Update camera feed
+        if (!IsCameraEnabled) return;
+        CameraImage.DispatcherQueue.TryEnqueue(async () =>
+        {
+            var buffer = GetImageBuffer(); // Read from Kinect
+            if (buffer is null || buffer.Length <= 0) return;
+            await CameraImage.PixelBuffer.AsStream().WriteAsync(buffer);
+            CameraImage.Invalidate(); // Enqueue for preview refresh
+        });
     }
 
     public void SignalJoint(int jointId)
@@ -119,6 +135,11 @@ public class KinectOne : KinectHandler.KinectHandler, ITrackingDevice
         // Request a refresh of the status UI
         Host?.RefreshStatusInterface();
     }
+
+    public Func<BitmapSource> GetCameraImage => () => CameraImage;
+    public Func<bool> GetIsCameraEnabled => () => IsCameraEnabled;
+    public Action<bool> SetIsCameraEnabled => value => IsCameraEnabled = value;
+    public Func<Vector3, Size> MapCoordinateDelegate => MapCoordinate;
 }
 
 internal static class PoseUtils

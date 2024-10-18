@@ -30,6 +30,7 @@ class KinectWrapper
 
     WAITABLE_HANDLE h_statusChangedEvent;
     WAITABLE_HANDLE h_bodyFrameEvent;
+    WAITABLE_HANDLE h_colorFrameEvent;
     bool newBodyFrameArrived = false;
 
     std::array<JointOrientation, JointType_Count> bone_orientations_;
@@ -39,6 +40,7 @@ class KinectWrapper
 
     inline static bool initialized_ = false;
     bool skeleton_tracked_ = false;
+    bool rgb_stream_enabled_ = false;
 
     void updater()
     {
@@ -81,6 +83,20 @@ class KinectWrapper
             }
             skeleton_tracked_ = false;
         }
+    }
+
+    void updateColorData()
+    {
+        if (!colorFrameReader)return; // Give up already
+
+        IColorFrame* colorFrame = nullptr;
+        colorFrameReader->AcquireLatestFrame(&colorFrame);
+
+        if (!colorFrame) return;
+        ResetBuffer(CameraBufferSize()); // Allocate buffer for image for copy
+
+        colorFrame->CopyConvertedFrameDataToArray(
+            CameraBufferSize(), color_buffer_, ColorImageFormat_Bgra);
     }
 
     bool initKinect()
@@ -130,6 +146,22 @@ class KinectWrapper
         if (bodyFrameSource) bodyFrameSource->Release();
     }
 
+    void initializeColor()
+    {
+        if (colorFrameReader)
+            colorFrameReader->Release();
+
+        IColorFrameSource* colorFrameSource;
+        kinectSensor->get_ColorFrameSource(&colorFrameSource);
+        colorFrameSource->OpenReader(&colorFrameReader);
+
+        // Newfangled event based frame capture
+        // https://github.com/StevenHickson/PCL_Kinect2SDK/blob/master/src/Microsoft_grabber2.cpp
+        h_colorFrameEvent = (WAITABLE_HANDLE)CreateEvent(nullptr, FALSE, FALSE, nullptr);
+        colorFrameReader->SubscribeFrameArrived(&h_colorFrameEvent);
+        if (colorFrameSource) colorFrameSource->Release();
+    }
+
     void terminateSkeleton()
     {
         if (!bodyFrameReader)return; // No need to do anything
@@ -148,6 +180,26 @@ class KinectWrapper
         }
         h_bodyFrameEvent = NULL;
         bodyFrameReader = nullptr;
+    }
+
+    void terminateColor()
+    {
+        if (!colorFrameReader)return; // No need to do anything
+        if (FAILED(colorFrameReader->UnsubscribeFrameArrived(h_colorFrameEvent)))
+        {
+            throw std::exception("Couldn't unsubscribe frame!");
+        }
+        __try
+        {
+            CloseHandle((HANDLE)h_colorFrameEvent);
+            colorFrameReader->Release();
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
+            // ignored
+        }
+        h_colorFrameEvent = NULL;
+        colorFrameReader = nullptr;
     }
 
     HRESULT kinect_status_result()
@@ -246,6 +298,7 @@ public:
             if (!initialized_) return 1;
 
             initializeSkeleton();
+            initializeColor();
 
             // Recreate the updater thread
             if (!updater_thread_)
@@ -306,6 +359,24 @@ public:
                             pArgs->Release(); // Release the frame
                         }
                     }
+
+                if (h_colorFrameEvent && rgb_stream_enabled_)
+                    if (HANDLE handles[] = {reinterpret_cast<HANDLE>(h_colorFrameEvent)};
+                        // Wait for a frame to arrive, give up after >3s of nothing
+                        MsgWaitForMultipleObjects(_countof(handles), handles,
+                                                  false, 3000, QS_ALLINPUT) == WAIT_OBJECT_0)
+                    {
+                        IColorFrameArrivedEventArgs* pArgs = nullptr;
+                        if (colorFrameReader &&
+                            SUCCEEDED(colorFrameReader->GetFrameArrivedEventData(h_colorFrameEvent, &pArgs)))
+                        {
+                            [&,this](IColorFrameReader& sender, IColorFrameArrivedEventArgs& eventArgs)
+                            {
+                                updateColorData();
+                            }(*colorFrameReader, *pArgs);
+                            pArgs->Release(); // Release the frame
+                        }
+                    }
             }
         }
     }
@@ -319,6 +390,7 @@ public:
             {
                 // Protect from null call
                 terminateSkeleton();
+                terminateColor();
 
                 return [&, this]
                 {
@@ -376,13 +448,74 @@ public:
         return skeleton_positions_;
     }
 
+    std::tuple<BYTE*, int> color_buffer()
+    {
+        return std::make_tuple(color_buffer_, size_in_bytes_last_);
+    }
+
     bool skeleton_tracked()
     {
         return skeleton_tracked_;
     }
 
+    void camera_enabled(bool enabled)
+    {
+        rgb_stream_enabled_ = enabled;
+    }
+
+    bool camera_enabled(void)
+    {
+        return rgb_stream_enabled_;
+    }
+
     int KinectJointType(int kinectJointType)
     {
         return KinectJointTypeDictionary.at(static_cast<JointType>(kinectJointType));
+    }
+
+    std::pair<int, int> CameraImageSize()
+    {
+        return std::make_pair(1920, 1080);
+    }
+
+    unsigned long CameraBufferSize()
+    {
+        const auto& [width, height] = CameraImageSize();
+        return width * height * 4;
+    }
+
+    std::pair<int, int> MapCoordinate(const CameraSpacePoint& skeletonPoint)
+    {
+        ColorSpacePoint spacePoint; // Holds the mapped coordinate
+        const auto& result = coordMapper->MapCameraPointToColorSpace(skeletonPoint, &spacePoint);
+
+        return SUCCEEDED(result) && !std::isnan(spacePoint.X) && !std::isnan(spacePoint.Y)
+                   ? std::make_pair(spacePoint.X, spacePoint.Y) // Send the mapped ones
+                   : std::make_pair(-1, -1); // Unknown coordinates - fall back to default drawing
+    }
+
+private:
+    DWORD size_in_bytes_ = 0;
+    DWORD size_in_bytes_last_ = 0;
+    BYTE* color_buffer_ = nullptr;
+
+    BYTE* ResetBuffer(UINT size)
+    {
+        if (!color_buffer_ || size_in_bytes_ != size)
+        {
+            if (color_buffer_)
+            {
+                delete[] color_buffer_;
+                color_buffer_ = nullptr;
+            }
+
+            if (0 != size)
+            {
+                color_buffer_ = new BYTE[size];
+            }
+            size_in_bytes_ = size;
+        }
+
+        return color_buffer_;
     }
 };
