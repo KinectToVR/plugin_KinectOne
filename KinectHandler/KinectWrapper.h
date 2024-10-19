@@ -17,9 +17,7 @@ inline void (*status_changed_event)();
 class KinectWrapper
 {
     IKinectSensor* kinectSensor = nullptr;
-    IBodyFrameReader* bodyFrameReader = nullptr;
-    IColorFrameReader* colorFrameReader = nullptr;
-    IDepthFrameReader* depthFrameReader = nullptr;
+    IMultiSourceFrameReader* multiFrameReader = nullptr;
     IMultiSourceFrame* multiFrame = nullptr;
     ICoordinateMapper* coordMapper = nullptr;
     BOOLEAN isTracking = false;
@@ -29,9 +27,7 @@ class KinectWrapper
     IBody* kinectBodies[BODY_COUNT] = {nullptr};
 
     WAITABLE_HANDLE h_statusChangedEvent;
-    WAITABLE_HANDLE h_bodyFrameEvent;
-    WAITABLE_HANDLE h_colorFrameEvent;
-    bool newBodyFrameArrived = false;
+    WAITABLE_HANDLE h_multiFrameEvent;
 
     std::array<JointOrientation, JointType_Count> bone_orientations_;
     std::array<Joint, JointType_Count> skeleton_positions_;
@@ -48,17 +44,28 @@ class KinectWrapper
         while (true)update();
     }
 
-    void updateSkeletalData()
+    void updateFrameData(IMultiSourceFrameArrivedEventArgs* args)
     {
-        if (!bodyFrameReader)return; // Give up already
+        if (!multiFrameReader) return; // Give up already
+
+        // Acquire the multi-source frame reference
+        IMultiSourceFrameReference* frameReference = nullptr;
+        args->get_FrameReference(&frameReference);
+
+        IMultiSourceFrame* multiFrame = nullptr;
+        frameReference->AcquireFrame(&multiFrame);
+
+        if (!multiFrame) return;
+
+        // Get the body frame and process it
+        IBodyFrameReference* bodyFrameReference = nullptr;
+        multiFrame->get_BodyFrameReference(&bodyFrameReference);
 
         IBodyFrame* bodyFrame = nullptr;
-        bodyFrameReader->AcquireLatestFrame(&bodyFrame);
+        bodyFrameReference->AcquireFrame(&bodyFrame);
 
         if (!bodyFrame) return;
-
         bodyFrame->GetAndRefreshBodyData(BODY_COUNT, kinectBodies);
-        newBodyFrameArrived = true;
         if (bodyFrame) bodyFrame->Release();
 
         // We have the frame, now parse it
@@ -75,28 +82,32 @@ class KinectWrapper
 
                 // Copy joint positions & orientations
                 std::copy(std::begin(joints), std::end(joints),
-                          skeleton_positions_.begin());
+                    skeleton_positions_.begin());
                 std::copy(std::begin(boneOrientations), std::end(boneOrientations),
-                          bone_orientations_.begin());
+                    bone_orientations_.begin());
 
                 break;
             }
             skeleton_tracked_ = false;
         }
-    }
 
-    void updateColorData()
-    {
-        if (!colorFrameReader)return; // Give up already
+        // Don't process color if not requested
+        if (!camera_enabled()) return;
+        
+        // Get the color frame and process it
+        IColorFrameReference* colorFrameReference = nullptr;
+        multiFrame->get_ColorFrameReference(&colorFrameReference);
 
         IColorFrame* colorFrame = nullptr;
-        colorFrameReader->AcquireLatestFrame(&colorFrame);
+        colorFrameReference->AcquireFrame(&colorFrame);
 
         if (!colorFrame) return;
         ResetBuffer(CameraBufferSize()); // Allocate buffer for image for copy
 
         colorFrame->CopyConvertedFrameDataToArray(
             CameraBufferSize(), color_buffer_, ColorImageFormat_Bgra);
+
+        if (colorFrame) colorFrame->Release();
     }
 
     bool initKinect()
@@ -114,6 +125,11 @@ class KinectWrapper
             BOOLEAN available = false;
             kinectSensor->get_IsAvailable(&available);
 
+#ifdef _DEBUG
+            // Emulation support bypass
+            available = true;
+#endif
+
             // Check the sensor (just in case)
             if (FAILED(hr_open) || !available || kinectSensor == nullptr)
             {
@@ -130,76 +146,38 @@ class KinectWrapper
         return false;
     }
 
-    void initializeSkeleton()
+    void initializeFrameReader()
     {
-        if (bodyFrameReader)
-            bodyFrameReader->Release();
+        if (multiFrameReader)
+            multiFrameReader->Release();
 
-        IBodyFrameSource* bodyFrameSource;
-        kinectSensor->get_BodyFrameSource(&bodyFrameSource);
-        bodyFrameSource->OpenReader(&bodyFrameReader);
+        kinectSensor->OpenMultiSourceFrameReader(
+            FrameSourceTypes_Body | FrameSourceTypes_Color, &multiFrameReader);
 
         // Newfangled event based frame capture
         // https://github.com/StevenHickson/PCL_Kinect2SDK/blob/master/src/Microsoft_grabber2.cpp
-        h_bodyFrameEvent = (WAITABLE_HANDLE)CreateEvent(nullptr, FALSE, FALSE, nullptr);
-        bodyFrameReader->SubscribeFrameArrived(&h_bodyFrameEvent);
-        if (bodyFrameSource) bodyFrameSource->Release();
+        h_multiFrameEvent = (WAITABLE_HANDLE)CreateEvent(nullptr, FALSE, FALSE, nullptr);
+        multiFrameReader->SubscribeMultiSourceFrameArrived(&h_multiFrameEvent);
     }
 
-    void initializeColor()
+    void terminateMultiFrame()
     {
-        if (colorFrameReader)
-            colorFrameReader->Release();
-
-        IColorFrameSource* colorFrameSource;
-        kinectSensor->get_ColorFrameSource(&colorFrameSource);
-        colorFrameSource->OpenReader(&colorFrameReader);
-
-        // Newfangled event based frame capture
-        // https://github.com/StevenHickson/PCL_Kinect2SDK/blob/master/src/Microsoft_grabber2.cpp
-        h_colorFrameEvent = (WAITABLE_HANDLE)CreateEvent(nullptr, FALSE, FALSE, nullptr);
-        colorFrameReader->SubscribeFrameArrived(&h_colorFrameEvent);
-        if (colorFrameSource) colorFrameSource->Release();
-    }
-
-    void terminateSkeleton()
-    {
-        if (!bodyFrameReader)return; // No need to do anything
-        if (FAILED(bodyFrameReader->UnsubscribeFrameArrived(h_bodyFrameEvent)))
+        if (!multiFrameReader)return; // No need to do anything
+        if (FAILED(multiFrameReader->UnsubscribeMultiSourceFrameArrived(h_multiFrameEvent)))
         {
             throw std::exception("Couldn't unsubscribe frame!");
         }
         __try
         {
-            CloseHandle((HANDLE)h_bodyFrameEvent);
-            bodyFrameReader->Release();
+            CloseHandle((HANDLE)h_multiFrameEvent);
+            multiFrameReader->Release();
         }
         __except (EXCEPTION_EXECUTE_HANDLER)
         {
             // ignored
         }
-        h_bodyFrameEvent = NULL;
-        bodyFrameReader = nullptr;
-    }
-
-    void terminateColor()
-    {
-        if (!colorFrameReader)return; // No need to do anything
-        if (FAILED(colorFrameReader->UnsubscribeFrameArrived(h_colorFrameEvent)))
-        {
-            throw std::exception("Couldn't unsubscribe frame!");
-        }
-        __try
-        {
-            CloseHandle((HANDLE)h_colorFrameEvent);
-            colorFrameReader->Release();
-        }
-        __except (EXCEPTION_EXECUTE_HANDLER)
-        {
-            // ignored
-        }
-        h_colorFrameEvent = NULL;
-        colorFrameReader = nullptr;
+        h_multiFrameEvent = NULL;
+        multiFrameReader = nullptr;
     }
 
     HRESULT kinect_status_result()
@@ -277,17 +255,25 @@ class KinectWrapper
 public:
     bool is_initialized()
     {
+#ifdef _DEBUG
+        return true;
+#else
         return initialized_;
+#endif
     }
 
     HRESULT status_result()
     {
+#ifdef _DEBUG
+        return 0;
+#else
         switch (kinect_status_result())
         {
         case S_OK: return 0;
         case S_FALSE: return 1;
         default: return -1;
         }
+#endif
     }
 
     int initialize()
@@ -295,10 +281,9 @@ public:
         try
         {
             initialized_ = initKinect();
-            if (!initialized_) return 1;
+            if (!is_initialized()) return 1;
 
-            initializeSkeleton();
-            initializeColor();
+            initializeFrameReader();
 
             // Recreate the updater thread
             if (!updater_thread_)
@@ -324,6 +309,12 @@ public:
                 {
                     BOOLEAN isAvailable = false;
                     args->get_IsAvailable(&isAvailable);
+
+#ifdef _DEBUG
+                    // Emulation support bypass
+                    isAvailable = true;
+#endif
+
                     initialized_ = isAvailable; // Update the status
                     status_changed_event(); // Notify the CLR listener
                 }
@@ -331,10 +322,16 @@ public:
         });
 
         // Update (only if the sensor is on and its status is ok)
-        if (initialized_ && kinectSensor)
+        if (is_initialized() && kinectSensor)
         {
             BOOLEAN isAvailable = false;
             HRESULT kinectStatus = kinectSensor->get_IsAvailable(&isAvailable);
+
+#ifdef _DEBUG
+            // Emulation support bypass
+            isAvailable = true;
+#endif
+
             if (kinectStatus == S_OK)
             {
                 // NEW ARRIVED FRAMES ------------------------
@@ -342,38 +339,20 @@ public:
                 while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) // Unnecessary?
                     DispatchMessage(&msg);
 
-                if (h_bodyFrameEvent)
-                    if (HANDLE handles[] = {reinterpret_cast<HANDLE>(h_bodyFrameEvent)};
+                if (h_multiFrameEvent)
+                    if (HANDLE handles[] = {reinterpret_cast<HANDLE>(h_multiFrameEvent)};
                         // Wait for a frame to arrive, give up after >3s of nothing
                         MsgWaitForMultipleObjects(_countof(handles), handles,
-                                                  false, 3000, QS_ALLINPUT) == WAIT_OBJECT_0)
+                                                  false, 100, QS_ALLINPUT) == WAIT_OBJECT_0)
                     {
-                        IBodyFrameArrivedEventArgs* pArgs = nullptr;
-                        if (bodyFrameReader &&
-                            SUCCEEDED(bodyFrameReader->GetFrameArrivedEventData(h_bodyFrameEvent, &pArgs)))
+                        IMultiSourceFrameArrivedEventArgs* pArgs = nullptr;
+                        if (multiFrameReader &&
+                            SUCCEEDED(multiFrameReader->GetMultiSourceFrameArrivedEventData(h_multiFrameEvent, &pArgs)))
                         {
-                            [&,this](IBodyFrameReader& sender, IBodyFrameArrivedEventArgs& eventArgs)
+                            [&,this](IMultiSourceFrameReader& sender, IMultiSourceFrameArrivedEventArgs& eventArgs)
                             {
-                                updateSkeletalData();
-                            }(*bodyFrameReader, *pArgs);
-                            pArgs->Release(); // Release the frame
-                        }
-                    }
-
-                if (h_colorFrameEvent && rgb_stream_enabled_)
-                    if (HANDLE handles[] = {reinterpret_cast<HANDLE>(h_colorFrameEvent)};
-                        // Wait for a frame to arrive, give up after >3s of nothing
-                        MsgWaitForMultipleObjects(_countof(handles), handles,
-                                                  false, 3000, QS_ALLINPUT) == WAIT_OBJECT_0)
-                    {
-                        IColorFrameArrivedEventArgs* pArgs = nullptr;
-                        if (colorFrameReader &&
-                            SUCCEEDED(colorFrameReader->GetFrameArrivedEventData(h_colorFrameEvent, &pArgs)))
-                        {
-                            [&,this](IColorFrameReader& sender, IColorFrameArrivedEventArgs& eventArgs)
-                            {
-                                updateColorData();
-                            }(*colorFrameReader, *pArgs);
+                                updateFrameData(&eventArgs);
+                            }(*multiFrameReader, *pArgs);
                             pArgs->Release(); // Release the frame
                         }
                     }
@@ -389,8 +368,7 @@ public:
             if (kinectSensor)
             {
                 // Protect from null call
-                terminateSkeleton();
-                terminateColor();
+                terminateMultiFrame();
 
                 return [&, this]
                 {
@@ -486,8 +464,11 @@ public:
 
     std::pair<int, int> MapCoordinate(const CameraSpacePoint& skeletonPoint)
     {
+        auto _skeletonPoint = skeletonPoint;
+        if (_skeletonPoint.Z < 0) _skeletonPoint.Z = 0.1f;
+
         ColorSpacePoint spacePoint; // Holds the mapped coordinate
-        const auto& result = coordMapper->MapCameraPointToColorSpace(skeletonPoint, &spacePoint);
+        const auto& result = coordMapper->MapCameraPointToColorSpace(_skeletonPoint, &spacePoint);
 
         return SUCCEEDED(result) && !std::isnan(spacePoint.X) && !std::isnan(spacePoint.Y)
                    ? std::make_pair(spacePoint.X, spacePoint.Y) // Send the mapped ones
@@ -501,6 +482,7 @@ private:
 
     BYTE* ResetBuffer(UINT size)
     {
+        size_in_bytes_last_ = size;
         if (!color_buffer_ || size_in_bytes_ != size)
         {
             if (color_buffer_)

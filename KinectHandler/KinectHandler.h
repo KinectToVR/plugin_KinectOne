@@ -56,7 +56,7 @@ namespace KinectHandler
         {
             if (!IsInitialized || !kinect_->camera_enabled()) return __nullptr;
             const auto& [unmanagedBuffer, size] = kinect_->color_buffer();
-            if (size <= 0) return __nullptr;
+            if (!unmanagedBuffer || size <= 0) return __nullptr;
 
             auto data = gcnew array<byte>(size); // Managed image placeholder
             Marshal::Copy(IntPtr(unmanagedBuffer), data, 0, size);
