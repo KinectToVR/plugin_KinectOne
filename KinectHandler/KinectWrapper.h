@@ -26,6 +26,9 @@ class KinectWrapper
     JointOrientation boneOrientations[JointType_Count];
     IBody* kinectBodies[BODY_COUNT] = {nullptr};
 
+    HandState leftHandState = HandState_Unknown;
+    HandState rightHandState = HandState_Unknown;
+
     WAITABLE_HANDLE h_statusChangedEvent;
     WAITABLE_HANDLE h_multiFrameEvent;
 
@@ -82,18 +85,25 @@ class KinectWrapper
 
                 // Copy joint positions & orientations
                 std::copy(std::begin(joints), std::end(joints),
-                    skeleton_positions_.begin());
+                          skeleton_positions_.begin());
                 std::copy(std::begin(boneOrientations), std::end(boneOrientations),
-                    bone_orientations_.begin());
+                          bone_orientations_.begin());
 
-                break;
+                // Get hand states
+                i->get_HandLeftState(&leftHandState);
+                i->get_HandRightState(&rightHandState);
+
+                break; // Enough
             }
+
             skeleton_tracked_ = false;
+            leftHandState = HandState_Unknown;
+            rightHandState = HandState_Unknown;
         }
 
         // Don't process color if not requested
         if (!camera_enabled()) return;
-        
+
         // Get the color frame and process it
         IColorFrameReference* colorFrameReference = nullptr;
         multiFrame->get_ColorFrameReference(&colorFrameReference);
@@ -449,6 +459,16 @@ public:
     int KinectJointType(int kinectJointType)
     {
         return KinectJointTypeDictionary.at(static_cast<JointType>(kinectJointType));
+    }
+
+    bool left_hand_state()
+    {
+        return kinectSensor && leftHandState == HandState_Closed;
+    }
+
+    bool right_hand_state()
+    {
+        return kinectSensor && rightHandState == HandState_Closed;
     }
 
     std::pair<int, int> CameraImageSize()

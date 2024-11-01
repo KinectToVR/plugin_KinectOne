@@ -98,6 +98,16 @@ namespace KinectHandler
             return trackedKinectJoints;
         }
 
+        property bool LeftHandClosed
+        {
+            bool get() { return kinect_->left_hand_state(); }
+        }
+
+        property bool RightHandClosed
+        {
+            bool get() { return kinect_->right_hand_state(); }
+        }
+
         property bool IsInitialized
         {
             bool get() { return kinect_->is_initialized(); }

@@ -1,40 +1,44 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
-    <TargetPlatformVersion>10.0.22621.0</TargetPlatformVersion>
-    <TargetPlatformIdentifier>Windows</TargetPlatformIdentifier>
-    <RootNamespace>plugin_KinectOne</RootNamespace>
-    <RuntimeIdentifiers>win10-x64</RuntimeIdentifiers>
-    <PublishTrimmed>true</PublishTrimmed>
-    <Platforms>x64</Platforms>
-    <UseWinUI>true</UseWinUI>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+		<TargetPlatformVersion>10.0.22621.0</TargetPlatformVersion>
+		<TargetPlatformIdentifier>Windows</TargetPlatformIdentifier>
+		<RootNamespace>plugin_KinectOne</RootNamespace>
+		<RuntimeIdentifiers>win10-x64</RuntimeIdentifiers>
+		<Platforms>x64</Platforms>
+		<UseWinUI>true</UseWinUI>
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Amethyst.Plugins.Contract" Version="0.2.25" />
-    <PackageReference Include="RestSharp" Version="108.0.3" />
-    <PackageReference Include="System.ComponentModel.Composition" Version="8.0.0" />
-    <PackageReference Include="System.ComponentModel.Composition.Registration" Version="8.0.0" />
-      <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240627000" />
-      <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
-  </ItemGroup>
+	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+		<PublishTrimmed>true</PublishTrimmed>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\KinectHandler\KinectHandler.vcxproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Amethyst.Plugins.Contract" Version="0.3.32-alpha" />
+		<PackageReference Include="RestSharp" Version="108.0.3" />
+		<PackageReference Include="System.ComponentModel.Composition" Version="8.0.0" />
+		<PackageReference Include="System.ComponentModel.Composition.Registration" Version="8.0.0" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240627000" />
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Content Include="Assets\**">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <ContentWithTargetPath Include="Resources\Microsoft.Kinect.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <TargetPath>Microsoft.Kinect.dll</TargetPath>
-    </ContentWithTargetPath>
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\KinectHandler\KinectHandler.vcxproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Assets\Resources\Dependencies\" />
-  </ItemGroup>
+	<ItemGroup>
+		<Content Include="Assets\**">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<ContentWithTargetPath Include="Resources\Microsoft.Kinect.dll">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<TargetPath>Microsoft.Kinect.dll</TargetPath>
+		</ContentWithTargetPath>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="Assets\Resources\Dependencies\" />
+	</ItemGroup>
 </Project>
