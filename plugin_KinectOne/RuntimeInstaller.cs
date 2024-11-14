@@ -11,6 +11,12 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 using RestSharp;
+using System.Data;
+using System.Linq;
+using Windows.Devices.Sms;
+using NAudio.CoreAudioApi;
+using plugin_Kinect360.PInvoke;
+using Windows.System;
 
 namespace plugin_KinectOne;
 
@@ -28,22 +34,33 @@ internal class SetupData : ICoreSetupData
 
 internal class RuntimeInstaller : IDependencyInstaller
 {
-	public IDependencyInstaller.ILocalizationHost Host { get; set; }
+    public IDependencyInstaller.ILocalizationHost Host { get; set; }
 
     public List<IDependency> ListDependencies()
     {
-        return new List<IDependency>
-        {
+        return
+        [
             new KinectRuntime
             {
                 Host = Host,
                 Name = Host?.RequestLocalizedString("/Plugins/KinectOne/Dependencies/Runtime/Name") ??
                        "Kinect for Xbox One Runtime"
             }
-        };
+        ];
     }
 
-    public List<IFix> ListFixes() => new();
+    public List<IFix> ListFixes()
+    {
+        return
+        [
+            new MicrophoneFix
+            {
+                Host = Host,
+                Name = Host?.RequestLocalizedString( // Without the "fix" part
+                    "/Plugins/KinectOne/Fixes/Microphone/Name") ?? "Microphone"
+            }
+        ];
+    }
 }
 
 internal class KinectRuntime : IDependency
@@ -112,10 +129,10 @@ internal class KinectRuntime : IDependency
                 .CopyToFolder(dependenciesFolder.Path);
 
             // Update the installation paths
-            paths = new[]
-            {
+            paths =
+            [
                 Path.Join(dependenciesFolder.Path, "KinectRuntime-x64.msi")
-            };
+            ];
         }
 
         // Finally install the packages
@@ -170,6 +187,45 @@ internal class KinectRuntime : IDependency
             }
 
         return true;
+    }
+}
+
+public class MicrophoneFix : IFix
+{
+    public IDependencyInstaller.ILocalizationHost Host { get; set; }
+    public string Name { get; set; } = string.Empty; // Set in ListFixes()
+
+    public bool IsMandatory => IsNecessary; // Runtime check (set both to 1 to auto-apply during setup)
+    public bool IsNecessary => KinectV2MicrophonePresent() && KinectV2MicrophoneDisabled(); // The check
+    public string InstallerEula => string.Empty; // Don't show, check the KinectSdk one for reference
+
+    public async Task<bool> Apply(IProgress<InstallationProgress> progress,
+        CancellationToken cancellationToken, object arg = null)
+    {
+        Host.Log($"Received fix application arguments: {arg}");
+
+        await Launcher.LaunchUriAsync(new Uri($"amethyst-app:crash-message#{Host.RequestLocalizedString(
+            "/Plugins/KinectOne/Fixes/NotReady/Prompt/MustEnableKinectMicrophone")}"));
+
+        // Open sound control panel on the recording tab
+        Process.Start("rundll32.exe", "shell32.dll,Control_RunDLL mmsys.cpl,,1");
+
+        return true; // That's all...
+    }
+
+    public static bool KinectV2MicrophonePresent()
+    {
+        return new MMDeviceEnumerator().EnumerateAudioEndPoints(DataFlow.Capture,
+                DeviceState.Disabled | DeviceState.Unplugged | DeviceState.Active)
+            .Any(wasapi => wasapi.DeviceFriendlyName == "Xbox NUI Sensor");
+    }
+
+    public static bool KinectV2MicrophoneDisabled()
+    {
+        return new MMDeviceEnumerator().EnumerateAudioEndPoints(DataFlow.Capture,
+                DeviceState.Disabled | DeviceState.Unplugged)
+            .Where(wasapi => wasapi.DeviceFriendlyName == "Xbox NUI Sensor")
+            .Any(wasapi => wasapi.State != DeviceState.Active);
     }
 }
 

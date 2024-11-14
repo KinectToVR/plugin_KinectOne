@@ -17,6 +17,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Amethyst.Plugins.Contract" Version="0.3.32-alpha" />
+		<PackageReference Include="NAudio.Sdl2" Version="2.2.5" />
 		<PackageReference Include="RestSharp" Version="108.0.3" />
 		<PackageReference Include="System.ComponentModel.Composition" Version="8.0.0" />
 		<PackageReference Include="System.ComponentModel.Composition.Registration" Version="8.0.0" />

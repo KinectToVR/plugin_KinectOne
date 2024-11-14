@@ -156,6 +156,62 @@
         {
             "id": "/JointsEnum/JointManual",
             "translation": "Manual"
+        },
+        {
+            "id": "/InputActions/Names/PauseLeft",
+            "translation": "Left Pause"
+        },
+        {
+            "id": "/InputActions/Names/PointLeft",
+            "translation": "Left Point"
+        },
+        {
+            "id": "/InputActions/Names/GrabLeft",
+            "translation": "Left Grab"
+        },
+        {
+            "id": "/InputActions/Names/PauseRight",
+            "translation": "Right Pause"
+        },
+        {
+            "id": "/InputActions/Names/PointRight",
+            "translation": "Right Point"
+        },
+        {
+            "id": "/InputActions/Names/GrabRight",
+            "translation": "Right Grab"
+        },
+        {
+            "id": "/InputActions/Descriptions/PauseLeft",
+            "translation": "Left hand pause gesture"
+        },
+        {
+            "id": "/InputActions/Descriptions/PointLeft",
+            "translation": "Left hand point gesture"
+        },
+        {
+            "id": "/InputActions/Descriptions/GrabLeft",
+            "translation": "Left hand grab gesture"
+        },
+        {
+            "id": "/InputActions/Descriptions/PauseRight",
+            "translation": "Right hand pause gesture"
+        },
+        {
+            "id": "/InputActions/Descriptions/PointRight",
+            "translation": "Right hand point gesture"
+        },
+        {
+            "id": "/InputActions/Descriptions/GrabRight",
+            "translation": "Right hand grab gesture"
+        },
+        {
+            "id": "/Plugins/KinectOne/Fixes/Microphone/Name",
+            "translation": "Kinect Microphone"
+        },
+        {
+            "id": "/Plugins/KinectOne/Fixes/NotReady/Prompt/MustEnableKinectMicrophone",
+            "translation": "Kinect microphone is disabled! Please enable it in system settings, as it's required for the Kinect for Windows SDK to function properly."
         }
     ]
 }
