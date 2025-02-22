@@ -115,25 +115,24 @@ internal class KinectRuntime : IDependency
                 "Assets", "Resources", "Dependencies", "KinectRuntime-x64.msi")
         };
 
+        await PathsHandler.Setup();
+
         // Copy to temp if amethyst is packaged
         // ReSharper disable once InvertIf
-        if (PackageUtils.IsAmethystPackaged)
-        {
-            // Create a shared folder with the dependencies
-            var dependenciesFolder = await ApplicationData.Current.TemporaryFolder.CreateFolderAsync(
-                Guid.NewGuid().ToString().ToUpper(), CreationCollisionOption.OpenIfExists);
+        // Create a shared folder with the dependencies
+        var dependenciesFolder = await PathsHandler.TemporaryFolder.CreateFolderAsync(
+            Guid.NewGuid().ToString().ToUpper(), CreationCollisionOption.OpenIfExists);
 
-            // Copy all driver files to Amethyst's local data folder
-            new DirectoryInfo(Path.Join(Directory.GetParent(Assembly.GetExecutingAssembly().Location)!.FullName,
-                    "Assets", "Resources", "Dependencies"))
-                .CopyToFolder(dependenciesFolder.Path);
+        // Copy all driver files to Amethyst's local data folder
+        new DirectoryInfo(Path.Join(Directory.GetParent(Assembly.GetExecutingAssembly().Location)!.FullName,
+                "Assets", "Resources", "Dependencies"))
+            .CopyToFolder(dependenciesFolder.Path);
 
-            // Update the installation paths
-            paths =
-            [
-                Path.Join(dependenciesFolder.Path, "KinectRuntime-x64.msi")
-            ];
-        }
+        // Update the installation paths
+        paths =
+        [
+            Path.Join(dependenciesFolder.Path, "KinectRuntime-x64.msi")
+        ];
 
         // Finally install the packages
         return InstallFiles(paths, progress, cancellationToken);
