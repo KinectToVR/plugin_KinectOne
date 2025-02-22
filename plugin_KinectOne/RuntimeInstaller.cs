@@ -203,8 +203,8 @@ public class MicrophoneFix : IFix
     {
         Host.Log($"Received fix application arguments: {arg}");
 
-        await Launcher.LaunchUriAsync(new Uri($"amethyst-app:crash-message#{Host.RequestLocalizedString(
-            "/Plugins/KinectOne/Fixes/NotReady/Prompt/MustEnableKinectMicrophone")}"));
+        await $"amethyst-app:crash-message#{Host.RequestLocalizedString(
+            "/Plugins/KinectOne/Fixes/NotReady/Prompt/MustEnableKinectMicrophone")}".Launch();
 
         // Open sound control panel on the recording tab
         Process.Start("rundll32.exe", "shell32.dll,Control_RunDLL mmsys.cpl,,1");
@@ -268,5 +268,62 @@ public static class StreamExtensions
             await destination.WriteAsync(buffer, 0, amtRead, cancellationToken);
             progress?.Invoke(total);
         } while (amtRead == bufferSize);
+    }
+}
+
+public static class UriExtensions
+{
+    public static Uri ToUri(this string source)
+    {
+        return new Uri(source);
+    }
+
+    public static async Task LaunchAsync(this Uri uri)
+    {
+        try
+        {
+            if (await Launcher.QueryAppUriSupportAsync(uri) is LaunchQuerySupportStatus.Available ||
+                uri.Scheme is "amethyst-app") await Launcher.LaunchUriAsync(uri);
+        }
+        catch (Exception)
+        {
+            // ignored
+        }
+    }
+
+    public static async Task Launch(this string uri)
+    {
+        try
+        {
+            if (PathsHandler.IsAmethystPackaged)
+            {
+                await uri.ToUri().LaunchAsync();
+            }
+            else
+            {
+                // If we've found who asked
+                if (File.Exists(Assembly.GetExecutingAssembly().Location))
+                {
+                    var info = new ProcessStartInfo
+                    {
+                        FileName = Assembly.GetExecutingAssembly().Location.Replace(".dll", ".exe"),
+                        Arguments = uri
+                    };
+
+                    try
+                    {
+                        Process.Start(info);
+                    }
+                    catch (Exception)
+                    {
+                        // ignored
+                    }
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // ignored
+        }
     }
 }
