@@ -228,21 +228,6 @@ public class MicrophoneFix : IFix
     }
 }
 
-public static class RestExtensions
-{
-    public static Task<byte[]> ExecuteDownloadDataAsync(this RestClient client, string baseUrl, RestRequest request)
-    {
-        client.Options.BaseUrl = new Uri(baseUrl);
-        return client.DownloadDataAsync(request);
-    }
-
-    public static Task<Stream> ExecuteDownloadStreamAsync(this RestClient client, string baseUrl, RestRequest request)
-    {
-        client.Options.BaseUrl = new Uri(baseUrl);
-        return client.DownloadStreamAsync(request);
-    }
-}
-
 public static class StreamExtensions
 {
     public static async Task CopyToWithProgressAsync(this Stream source,
