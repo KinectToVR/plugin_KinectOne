@@ -1,57 +1,217 @@
 {
   "language": "it",
-  "messages": [
-    {
-      "id": "/Plugins/KinectOne/Statuses/Success",
-      "translation": "Successo!\nS_OK\nVa tutto bene!"
-    },
-    {
-      "id": "/Plugins/KinectOne/Statuses/NotAvailable",
-      "translation": "Sensore non disponibile!\nE_NOTAVAILABLE\nControllare se il Kinect sia collegato tramite USB al tuo PC e sia alimentato dalla corrente."
-    },
-    {
-      "id": "/Plugins/KinectOne/Stages/Downloading/WiX",
-      "translation": "Downloading WiX Toolset..."
-    },
-    {
-      "id": "/Plugins/KinectOne/Stages/Exceptions/WiX/Extraction",
-      "translation": "Toolset extraction failed! Exception: {0}"
-    },
-    {
-      "id": "/Plugins/KinectOne/Stages/Exceptions/WiX/Installation",
-      "translation": "Toolset installation failed! Exception: {0}"
-    },
-    {
-      "id": "/Plugins/KinectOne/Stages/Downloading/Runtime",
-      "translation": "Downloading Kinect for Xbox One Runtime..."
-    },
-    {
-      "id": "/Plugins/KinectOne/Stages/Exceptions/Runtime/Installation",
-      "translation": "Runtime installation failed! Exception: {0}"
-    },
-    {
-      "id": "/Plugins/KinectOne/Stages/Unpacking",
-      "translation": "Unpacking {0}..."
-    },
-    {
-      "id": "/Plugins/KinectOne/Stages/Installing",
-      "translation": "Installing {0}..."
-    },
-    {
-      "id": "/Plugins/KinectOne/Stages/Exceptions/Other",
-      "translation": "Exception: {0}"
-    },
-    {
-      "id": "/Plugins/KinectOne/Stages/Dark/Error/Timeout",
-      "translation": "Failed to execute dark.exe in the allocated time!"
-    },
-    {
-      "id": "/Plugins/KinectOne/Stages/Dark/Error/Result",
-      "translation": "Dark.exe exited with error code: {0}"
-    },
-    {
-      "id": "/Plugins/KinectOne/Dependencies/Runtime/Name",
-      "translation": "Kinect for Xbox One Runtime"
-    }
-  ]
+    "messages": [
+        {
+            "id": "/Plugins/KinectOne/Statuses/Success",
+            "translation": "Successo!\nS_OK\nTutto a posto!"
+        },
+        {
+            "id": "/Plugins/KinectOne/Statuses/NotAvailable",
+            "translation": "Sensore non disponibile!\nE_NOTAVAILABLE\nControlla se il Kinect è collegato alle prese USB e di alimentazione del tuo PC."
+        },
+        {
+            "id": "/Plugins/KinectOne/Stages/Downloading/WiX",
+            "translation": "Scaricando Toolset WiX..."
+        },
+        {
+            "id": "/Plugins/KinectOne/Stages/Exceptions/WiX/Extraction",
+            "translation": "Estrazione toolset fallita! Errore: {0}"
+        },
+        {
+            "id": "/Plugins/KinectOne/Stages/Exceptions/WiX/Installation",
+            "translation": "Installazione toolset fallita! Errore: {0}"
+        },
+        {
+            "id": "/Plugins/KinectOne/Stages/Downloading/Runtime",
+            "translation": "Scaricando Runtime Kinect per Xbox One..."
+        },
+        {
+            "id": "/Plugins/KinectOne/Stages/Exceptions/Runtime/Installation",
+            "translation": "Installazione runtime fallita! Errore: {0}"
+        },
+        {
+            "id": "/Plugins/KinectOne/Stages/Downloading/Toolkit",
+            "translation": "Scaricando Toolkit Kinect per Xbox One..."
+        },
+        {
+            "id": "/Plugins/KinectOne/Stages/Exceptions/Toolkit/Installation",
+            "translation": "Installazione Toolkit fallita! Errore: {0}"
+        },
+        {
+            "id": "/Plugins/KinectOne/Stages/Unpacking",
+            "translation": "Spacchettando {0}..."
+        },
+        {
+            "id": "/Plugins/KinectOne/Stages/Installing",
+            "translation": "Installando {0}..."
+        },
+        {
+            "id": "/Plugins/KinectOne/Stages/Exceptions/Other",
+            "translation": "Errore: {0}"
+        },
+        {
+            "id": "/Plugins/KinectOne/Stages/Dark/Error/Result",
+            "translation": "Dark.exe terminato con codice errore: {0}"
+        },
+        {
+            "id": "/Plugins/KinectOne/Dependencies/Runtime/Name",
+            "translation": "Runtime Kinect per Xbox One"
+        },
+        {
+            "id": "/Plugins/KinectOne/Dependencies/Toolkit/Name",
+            "translation": "Toolkit Kinect per Xbox One"
+        },
+        {
+            "id": "/JointsEnum/JointHead",
+            "translation": "Testa"
+        },
+        {
+            "id": "/JointsEnum/JointNeck",
+            "translation": "Collo"
+        },
+        {
+            "id": "/JointsEnum/JointSpineShoulder",
+            "translation": "Colonna Vertebrale (Spalle)"
+        },
+        {
+            "id": "/JointsEnum/JointShoulderLeft",
+            "translation": "Spalla Sinistra"
+        },
+        {
+            "id": "/JointsEnum/JointElbowLeft",
+            "translation": "Gomito Sinistro"
+        },
+        {
+            "id": "/JointsEnum/JointWristLeft",
+            "translation": "Polso Sinistro"
+        },
+        {
+            "id": "/JointsEnum/JointHandLeft",
+            "translation": "Mano Sinistra"
+        },
+        {
+            "id": "/JointsEnum/JointHandTipLeft",
+            "translation": "Punta della Mano Sinistra"
+        },
+        {
+            "id": "/JointsEnum/JointThumbLeft",
+            "translation": "Pollice Sinistro"
+        },
+        {
+            "id": "/JointsEnum/JointShoulderRight",
+            "translation": "Spalla Destra"
+        },
+        {
+            "id": "/JointsEnum/JointElbowRight",
+            "translation": "Gomito Destro"
+        },
+        {
+            "id": "/JointsEnum/JointWristRight",
+            "translation": "Polso Destro"
+        },
+        {
+            "id": "/JointsEnum/JointHandRight",
+            "translation": "Mano Destra"
+        },
+        {
+            "id": "/JointsEnum/JointHandTipRight",
+            "translation": "Punta della Mano Destra"
+        },
+        {
+            "id": "/JointsEnum/JointThumbRight",
+            "translation": "Pollice Destro"
+        },
+        {
+            "id": "/JointsEnum/JointSpineMiddle",
+            "translation": "Colonna Vertebrale (Centro)"
+        },
+        {
+            "id": "/JointsEnum/JointSpineWaist",
+            "translation": "Vita"
+        },
+        {
+            "id": "/JointsEnum/JointHipLeft",
+            "translation": "Anca Sinistra"
+        },
+        {
+            "id": "/JointsEnum/JointKneeLeft",
+            "translation": "Ginocchio Sinistro"
+        },
+        {
+            "id": "/JointsEnum/JointFootLeft",
+            "translation": "Piede Sinistro"
+        },
+        {
+            "id": "/JointsEnum/JointFootTipLeft",
+            "translation": "Punta del Piede Sinistro"
+        },
+        {
+            "id": "/JointsEnum/JointHipRight",
+            "translation": "Anca Destra"
+        },
+        {
+            "id": "/JointsEnum/JointKneeRight",
+            "translation": "Ginocchio Destro"
+        },
+        {
+            "id": "/JointsEnum/JointFootRight",
+            "translation": "Piede Destro"
+        },
+        {
+            "id": "/JointsEnum/JointFootTipRight",
+            "translation": "Punta del Piede Destro"
+        },
+        {
+            "id": "/JointsEnum/JointManual",
+            "translation": "Manuale"
+        },
+        {
+            "id": "/InputActions/Names/PauseLeft",
+            "translation": "Pausa Sinistra"
+        },
+        {
+            "id": "/InputActions/Names/PointLeft",
+            "translation": "Puntamento Sinistro"
+        },
+        {
+            "id": "/InputActions/Names/PauseRight",
+            "translation": "Pausa Destra"
+        },
+        {
+            "id": "/InputActions/Names/PointRight",
+            "translation": "Puntamento Destro"
+        },
+        {
+            "id": "/InputActions/Descriptions/PauseLeft",
+            "translation": "Gesto di pausa con la mano sinistra"
+        },
+        {
+            "id": "/InputActions/Descriptions/PointLeft",
+            "translation": "Gesto di puntamento con la mano sinistra"
+        },
+        {
+            "id": "/InputActions/Descriptions/GrabLeft",
+            "translation": "Gesto di presa con la mano sinistra"
+        },
+        {
+            "id": "/InputActions/Descriptions/PauseRight",
+            "translation": "Gesto di pausa con la mano destra"
+        },
+        {
+            "id": "/InputActions/Descriptions/PointRight",
+            "translation": "Gesto di puntamento con la mano destra"
+        },
+        {
+            "id": "/InputActions/Descriptions/GrabRight",
+            "translation": "Gesto di presa con la mano destra"
+        },
+        {
+            "id": "/Plugins/KinectOne/Fixes/Microphone/Name",
+            "translation": "Microfono Kinect"
+        },
+        {
+            "id": "/Plugins/KinectOne/Fixes/NotReady/Stage/KinectMicrophoneDisabled",
+            "translation": "Il microfono del Kinect è disabilitato! L'SDK Kinect per Windows non funzionerà correttamente. Abilita il microfono..."
+        }
+    ]
 }
