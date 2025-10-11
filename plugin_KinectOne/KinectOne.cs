@@ -1,22 +1,25 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See LICENSE in the project root for license information.
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.Composition;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Amethyst.Plugins.Contract;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media.Imaging;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using Amethyst.Contract;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
+using Avalonia.Threading;
+using SkiaSharp;
+using Windows.Storage.Streams;
+using Windows.UI.ViewManagement;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using Size = System.Drawing.Size;
+using Vector = Avalonia.Vector;
 
 namespace plugin_KinectOne;
 
@@ -24,7 +27,7 @@ namespace plugin_KinectOne;
 [ExportMetadata("Name", "Xbox One Kinect")]
 [ExportMetadata("Guid", "K2VRTEAM-AME2-APII-DVCE-DVCEKINECTV2")]
 [ExportMetadata("Publisher", "K2VR Team")]
-[ExportMetadata("Version", "1.0.0.1")]
+[ExportMetadata("Version", "2.0.0.0")]
 [ExportMetadata("Website", "https://github.com/KimihikoAkayasaki/plugin_KinectOne")]
 [ExportMetadata("DependencyLink", "https://docs.k2vr.tech/{0}/one/setup/")]
 [ExportMetadata("DependencySource",
@@ -36,13 +39,38 @@ public class KinectOne : KinectHandler.KinectHandler, ITrackingDevice
     [Import(typeof(IAmethystHost))] private IAmethystHost Host { get; set; }
 
     private bool PluginLoaded { get; set; }
-    public bool IsPositionFilterBlockingEnabled => false;
-    public bool IsPhysicsOverrideEnabled => false;
-    public bool IsSelfUpdateEnabled => false;
-    public bool IsFlipSupported => true;
-    public bool IsAppOrientationSupported => true;
-    public object SettingsInterfaceRoot => null;
-    public WriteableBitmap CameraImage { get; set; }
+
+    public bool IsPositionFilterBlockingEnabled
+    {
+        get => false;
+    }
+
+    public bool IsPhysicsOverrideEnabled
+    {
+        get => false;
+    }
+
+    public bool IsSelfUpdateEnabled
+    {
+        get => false;
+    }
+
+    public bool IsFlipSupported
+    {
+        get => true;
+    }
+
+    public bool IsAppOrientationSupported
+    {
+        get => true;
+    }
+
+    public object SettingsInterfaceRoot
+    {
+        get => null;
+    }
+
+    public SKBitmap CameraImage { get; set; }
     public static IAmethystHost HostStatic { get; set; }
 
     private readonly GestureDetector
@@ -65,60 +93,58 @@ public class KinectOne : KinectHandler.KinectHandler, ITrackingDevice
                     [
                         new KeyInputAction<bool>
                         {
-                            Name = "Left Pause", Description = "Left hand pause gesture",
-                            Guid = "PauseLeft_One", GetHost = () => HostStatic
+                            Name = "Left Pause", Description = "Left hand pause gesture", Guid = "PauseLeft_One", GetHost = () => HostStatic
                         },
                         new KeyInputAction<bool>
                         {
-                            Name = "Left Point", Description = "Left hand point gesture",
-                            Guid = "PointLeft_One", GetHost = () => HostStatic
+                            Name = "Left Point", Description = "Left hand point gesture", Guid = "PointLeft_One", GetHost = () => HostStatic
                         },
                         new KeyInputAction<bool>
                         {
-                            Name = "Left Grab", Description = "Left hand grab gesture",
-                            Guid = "GrabLeft_One", GetHost = () => HostStatic
+                            Name = "Left Grab", Description = "Left hand grab gesture", Guid = "GrabLeft_One", GetHost = () => HostStatic
                         }
                     ],
                     TrackedJointType.JointHandRight =>
                     [
                         new KeyInputAction<bool>
                         {
-                            Name = "Right Pause", Description = "Right hand pause gesture",
-                            Guid = "PauseRight_One", GetHost = () => HostStatic
+                            Name = "Right Pause", Description = "Right hand pause gesture", Guid = "PauseRight_One", GetHost = () => HostStatic
                         },
                         new KeyInputAction<bool>
                         {
-                            Name = "Right Point", Description = "Right hand point gesture",
-                            Guid = "PointRight_One", GetHost = () => HostStatic
+                            Name = "Right Point", Description = "Right hand point gesture", Guid = "PointRight_One", GetHost = () => HostStatic
                         },
                         new KeyInputAction<bool>
                         {
-                            Name = "Right Grab", Description = "Right hand grab gesture",
-                            Guid = "GrabRight_One", GetHost = () => HostStatic
+                            Name = "Right Grab", Description = "Right hand grab gesture", Guid = "GrabRight_One", GetHost = () => HostStatic
                         }
                     ],
                     _ => []
                 }
             }));
 
-    public string DeviceStatusString => PluginLoaded
-        ? DeviceStatus switch
-        {
-            0 => Host.RequestLocalizedString("/Plugins/KinectOne/Statuses/Success"),
-            1 => Host.RequestLocalizedString("/Plugins/KinectOne/Statuses/NotAvailable"),
-            _ => $"Undefined: {DeviceStatus}\nE_UNDEFINED\nSomething weird has happened, although we can't tell what."
-        }
-        : $"Undefined: {DeviceStatus}\nE_UNDEFINED\nSomething weird has happened, although we can't tell what.";
+    public string DeviceStatusString
+    {
+        get => PluginLoaded ?
+            DeviceStatus switch
+            {
+                0 => Host.RequestLocalizedString("/Plugins/KinectOne/Statuses/Success"),
+                1 => Host.RequestLocalizedString("/Plugins/KinectOne/Statuses/NotAvailable"),
+                _ => $"Undefined: {DeviceStatus}\nE_UNDEFINED\nSomething weird has happened, although we can't tell what."
+            } :
+            $"Undefined: {DeviceStatus}\nE_UNDEFINED\nSomething weird has happened, although we can't tell what.";
+    }
 
-    public Uri ErrorDocsUri => new($"https://docs.k2vr.tech/{Host?.DocsLanguageCode ?? "en"}/one/troubleshooting/");
+    public Uri ErrorDocsUri
+    {
+        get => new($"https://docs.k2vr.tech/{Host?.DocsLanguageCode ?? "en"}/one/troubleshooting/");
+    }
 
-    public void OnLoad()
+    public Task OnLoad()
     {
         // Backup the plugin host
         HostStatic = Host;
         PluginLoaded = true;
-
-        CameraImage = new WriteableBitmap(CameraImageWidth, CameraImageHeight);
 
         try
         {
@@ -137,10 +163,10 @@ public class KinectOne : KinectHandler.KinectHandler, ITrackingDevice
 
                         action.Image = new Image
                         {
-                            Source = new BitmapImage(new Uri($"ms-appx:///{Path.Join(
+                            Source = Bitmap.DecodeToHeight(File.OpenRead(Path.Join(
                                 Directory.GetParent(Assembly.GetExecutingAssembly().Location)!.FullName,
                                 "Assets", "Resources", "Icons", $"{(((dynamic)Host).IsDarkMode as bool? ?? false ? "D" : "W")}" +
-                                                                $"_{action.Guid.Replace("_One", "")}.png")}"))
+                                                                $"_{action.Guid.Replace("_One", "")}.png")), 500)
                         };
                     }
                 }
@@ -150,9 +176,11 @@ public class KinectOne : KinectHandler.KinectHandler, ITrackingDevice
         {
             Host?.Log($"Error setting joint names! Message: {e.Message}", LogSeverity.Error);
         }
+
+        return Task.CompletedTask;
     }
 
-    public void Initialize()
+    public Task Initialize()
     {
         switch (InitializeKinect())
         {
@@ -166,9 +194,11 @@ public class KinectOne : KinectHandler.KinectHandler, ITrackingDevice
                 Host.Log("Tried to initialize the Kinect, but a native exception occurred!", LogSeverity.Error);
                 break;
         }
+
+        return Task.CompletedTask;
     }
 
-    public void Shutdown()
+    public Task Shutdown()
     {
         switch (ShutdownKinect())
         {
@@ -185,6 +215,8 @@ public class KinectOne : KinectHandler.KinectHandler, ITrackingDevice
                 Host.Log("Tried to shutdown the Kinect sensor, but a native exception occurred!", LogSeverity.Error);
                 break;
         }
+
+        return Task.CompletedTask;
     }
 
     public void Update()
@@ -201,14 +233,27 @@ public class KinectOne : KinectHandler.KinectHandler, ITrackingDevice
 
         // Update camera feed
         if (IsCameraEnabled)
-            CameraImage.DispatcherQueue.TryEnqueue(async () =>
+        {
+            Task.Run(() =>
             {
                 var buffer = GetImageBuffer(); // Read from Kinect
                 if (buffer is null || buffer.Length <= 0) return;
-                await CameraImage.PixelBuffer.AsStream().WriteAsync(buffer);
-                CameraImage.Invalidate(); // Enqueue for preview refresh
-            });
 
+                var info = new SKImageInfo(CameraImageWidth, CameraImageHeight, SKColorType.Bgra8888, SKAlphaType.Premul);
+
+                if (CameraImage is null)
+                {
+                    CameraImage = new SKBitmap(info);
+                    CameraImage.InstallPixels(info, Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0), CameraImageWidth * 4);
+                }
+
+                // Pin the byte[] so GC won't move it
+                var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+                var ptr = handle.AddrOfPinnedObject();
+
+                CameraImage.InstallPixels(info, ptr, CameraImageWidth * 4, (_, _) => handle.Free());
+            });
+        }
 
         // Update gestures
         if (trackedJoints.Count != 25) return;
@@ -261,12 +306,16 @@ public class KinectOne : KinectHandler.KinectHandler, ITrackingDevice
                 Host.ReceiveKeyInput(pauseActionRight, _pauseDetectorRight.Update(armDotRight > 0.9f && armTiltDotRight is > 0.4f and < 0.7f));
 
             if (TrackedJoints[(int)TrackedJointType.JointHandLeft].SupportedInputActions.IsUsed(1, out var pointActionLeft))
+            {
                 Host.ReceiveKeyInput(pointActionLeft, _pointDetectorLeft
                     .Update(armDotLeft > 0.9f && armTiltDotLeft is > -0.5f and < 0.5f && armDownDotLeft is > -0.3f and < 0.7f));
+            }
 
             if (TrackedJoints[(int)TrackedJointType.JointHandRight].SupportedInputActions.IsUsed(1, out var pointActionRight))
+            {
                 Host.ReceiveKeyInput(pointActionRight, _pointDetectorRight
                     .Update(armDotRight > 0.9f && armTiltDotRight is > -0.5f and < 0.5f && armDownDotRight is > -0.3f and < 0.7f));
+            }
 
             if (TrackedJoints[(int)TrackedJointType.JointHandLeft].SupportedInputActions.IsUsed(2, out var grabActionLeft))
                 Host.ReceiveKeyInput(grabActionLeft, LeftHandClosed);
@@ -296,10 +345,25 @@ public class KinectOne : KinectHandler.KinectHandler, ITrackingDevice
         Host?.RefreshStatusInterface();
     }
 
-    public Func<BitmapSource> GetCameraImage => () => CameraImage;
-    public Func<bool> GetIsCameraEnabled => () => IsCameraEnabled;
-    public Action<bool> SetIsCameraEnabled => value => IsCameraEnabled = value;
-    public Func<Vector3, Size> MapCoordinateDelegate => MapCoordinate;
+    public Func<SKBitmap> GetCameraImage
+    {
+        get => () => CameraImage;
+    }
+
+    public Func<bool> GetIsCameraEnabled
+    {
+        get => () => IsCameraEnabled;
+    }
+
+    public Action<bool> SetIsCameraEnabled
+    {
+        get => value => IsCameraEnabled = value;
+    }
+
+    public Func<Vector3, Size> MapCoordinateDelegate
+    {
+        get => MapCoordinate;
+    }
 }
 
 internal static class Utils
@@ -307,16 +371,18 @@ internal static class Utils
     public static Quaternion Safe(this Quaternion q)
     {
         return (q.X is 0 && q.Y is 0 && q.Z is 0 && q.W is 0) ||
-               float.IsNaN(q.X) || float.IsNaN(q.Y) || float.IsNaN(q.Z) || float.IsNaN(q.W)
-            ? Quaternion.Identity // Return a placeholder quaternion
-            : q; // If everything is fine, return the actual orientation
+               float.IsNaN(q.X) || float.IsNaN(q.Y) || float.IsNaN(q.Z) || float.IsNaN(q.W) ?
+            Quaternion.Identity // Return a placeholder quaternion
+            :
+            q; // If everything is fine, return the actual orientation
     }
 
     public static Vector3 Safe(this Vector3 v)
     {
-        return float.IsNaN(v.X) || float.IsNaN(v.Y) || float.IsNaN(v.Z)
-            ? Vector3.Zero // Return a placeholder position vector
-            : v; // If everything is fine, return the actual orientation
+        return float.IsNaN(v.X) || float.IsNaN(v.Y) || float.IsNaN(v.Z) ?
+            Vector3.Zero // Return a placeholder position vector
+            :
+            v; // If everything is fine, return the actual orientation
     }
 
     public static T At<T>(this SortedSet<T> set, int at)

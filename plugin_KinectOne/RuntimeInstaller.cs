@@ -6,39 +6,44 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
-using Amethyst.Plugins.Contract;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Markup;
-using Microsoft.UI.Xaml.Media;
-using RestSharp;
-using System.Data;
 using System.Linq;
-using Windows.Devices.Sms;
 using NAudio.CoreAudioApi;
-using plugin_Kinect360.PInvoke;
 using Windows.System;
+using Amethyst.Contract;
+using Avalonia.Controls;
+using Avalonia.Media;
 
 namespace plugin_KinectOne;
 
 internal class SetupData : ICoreSetupData
 {
-    public object PluginIcon => new PathIcon
+    public object PluginIcon
     {
-        Data = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry),
-            "M45.26,18.3V15.93H69.51V1.1H0V16H24.25v2.37H0v5.25H69.51V18.3ZM9.36,13.19A4.63,4.63,0,0,1,4.65,8.45a4.61,4.61,0,0,1,4.6-4.67,4.71,4.71,0,1,1,.11,9.41Z")
-    };
+        get => new PathIcon
+        {
+            Data = Geometry.Parse(
+                "M45.26,18.3V15.93H69.51V1.1H0V16H24.25v2.37H0v5.25H69.51V18.3ZM9.36,13.19A4.63,4.63,0,0,1,4.65,8.45a4.61,4.61,0,0,1,4.6-4.67,4.71,4.71,0,1,1,.11,9.41Z")
+        };
+    }
 
-    public string GroupName => "kinect";
-    public Type PluginType => typeof(ITrackingDevice);
+    public string GroupName
+    {
+        get => "kinect";
+    }
+
+    public Type PluginType
+    {
+        get => typeof(ITrackingDevice);
+    }
 }
 
 internal class RuntimeInstaller : IDependencyInstaller
 {
     public IDependencyInstaller.ILocalizationHost Host { get; set; }
 
-    public List<IDependency> ListDependencies()
+    public List<IDependency> Dependencies
     {
-        return
+        get =>
         [
             new KinectRuntime
             {
@@ -49,9 +54,9 @@ internal class RuntimeInstaller : IDependencyInstaller
         ];
     }
 
-    public List<IFix> ListFixes()
+    public List<IFix> Fixes
     {
-        return
+        get =>
         [
             new MicrophoneFix
             {
@@ -68,7 +73,11 @@ internal class KinectRuntime : IDependency
     public IDependencyInstaller.ILocalizationHost Host { get; set; }
 
     public string Name { get; set; }
-    public bool IsMandatory => true;
+
+    public bool IsMandatory
+    {
+        get => true;
+    }
 
     public bool IsInstalled
     {
@@ -146,6 +155,7 @@ internal class KinectRuntime : IDependency
 
         // Execute each install
         foreach (var installFile in files)
+        {
             try
             {
                 // msi /qn /norestart
@@ -184,6 +194,7 @@ internal class KinectRuntime : IDependency
 
                 return false;
             }
+        }
 
         return true;
     }
@@ -194,9 +205,20 @@ public class MicrophoneFix : IFix
     public IDependencyInstaller.ILocalizationHost Host { get; set; }
     public string Name { get; set; } = string.Empty; // Set in ListFixes()
 
-    public bool IsMandatory => IsNecessary; // Runtime check (set both to 1 to auto-apply during setup)
-    public bool IsNecessary => KinectV2MicrophonePresent() && KinectV2MicrophoneDisabled(); // The check
-    public string InstallerEula => string.Empty; // Don't show, check the KinectSdk one for reference
+    public bool IsMandatory
+    {
+        get => IsNecessary; // Runtime check (set both to 1 to auto-apply during setup)
+    }
+
+    public bool IsNecessary
+    {
+        get => KinectV2MicrophonePresent() && KinectV2MicrophoneDisabled(); // The check
+    }
+
+    public string InstallerEula
+    {
+        get => string.Empty; // Don't show, check the KinectSdk one for reference
+    }
 
     public async Task<bool> Apply(IProgress<InstallationProgress> progress,
         CancellationToken cancellationToken, object arg = null)
@@ -289,11 +311,7 @@ public static class UriExtensions
                 // If we've found who asked
                 if (File.Exists(Assembly.GetExecutingAssembly().Location))
                 {
-                    var info = new ProcessStartInfo
-                    {
-                        FileName = Assembly.GetExecutingAssembly().Location.Replace(".dll", ".exe"),
-                        Arguments = uri
-                    };
+                    var info = new ProcessStartInfo { FileName = Assembly.GetExecutingAssembly().Location.Replace(".dll", ".exe"), Arguments = uri };
 
                     try
                     {

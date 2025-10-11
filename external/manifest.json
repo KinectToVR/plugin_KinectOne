@@ -1,7 +1,17 @@
 {
-  "version": "1.0.0.0",
-  "display_name": "Xbox One Kinect",
-  "download_":  "plugin_KinectOne.zip",
-  "changelog": "Allow Microsoft.Kinect trimming as we're replacing it anyway.",
-  "guid": "K2VRTEAM-AME2-APII-DVCE-DVCEKINECTV2"
+  "name": "Xbox One Kinect",
+  "description": "Ame2 plugin for the Xbox One Kinect.",
+  "guid": "K2VRTEAM-AME2-APII-DVCE-DVCEKINECTV2",
+  "type": "device",
+  "author": "K2VR Team",
+  "artifacts": [
+    {
+      "version": "2.0.0.0",
+      "contract": "2.0.0.0",
+      "platform": "windows",
+      "name": "Kinect V2",
+      "download": "plugin_KinectOne.zip",
+      "changelog": "Initial release of the Kinect V2 plugin."
+    }
+  ]
 }

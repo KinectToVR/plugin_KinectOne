@@ -1,7 +1,9 @@
 {
   "profiles": {
-    "plugin_OpenVR": {
-      "commandName": "Project"
+    "Amethyst": {
+      "commandName": "Executable",
+      "executablePath": ".\\Amethyst.Desktop.exe",
+      "workingDirectory": "..\\..\\..\\Amethyst.Desktop\\bin\\Debug\\net8.0-windows10.0.17763.0\\"
     }
   }
 }

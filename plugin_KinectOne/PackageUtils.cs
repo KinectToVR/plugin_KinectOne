@@ -1,11 +1,11 @@
-﻿using Amethyst.Plugins.Contract;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.Storage;
+using Amethyst.Contract;
 
 namespace plugin_KinectOne;
 
